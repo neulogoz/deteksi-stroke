@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deteksi Stroke - Instrumen Skrining & Tatalaksana FKTP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .tab-active { border-bottom: 3px solid #0d9488; color: #0f766e; font-weight: 700; background-color: #f0fdfa; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background-color: #ffffff !important; color: #000000 !important; }
+      .print-box { border: 1px solid #cbd5e1 !important; box-shadow: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="bg-teal-700 text-white shadow-md print:bg-white print:text-slate-900 print:border-b-2 print:border-slate-800 print:shadow-none">
+    <div class="max-w-5xl mx-auto px-4 py-5 flex flex-col md:flex-row justify-between items-center gap-3">
+      <div>
+        <span class="bg-teal-900 text-teal-100 text-xs font-semibold px-2.5 py-1 rounded uppercase tracking-wider no-print">Layanan Primer / FKTP</span>
+        <h1 class="text-2xl md:text-3xl font-bold mt-1">DETEKSI STROKE</h1>
+        <p class="text-teal-100 print:text-slate-600 text-sm">Sistem Skoring Prediksi Risiko, Skrining Kognitif & Triase Stroke Terpadu</p>
+      </div>
+      <div class="text-xs bg-teal-800/70 print:bg-transparent p-3 rounded-lg border border-teal-600 print:border-none text-right">
+        <p class="font-semibold">Acuan Pedoman Klinis:</p>
+        <p>Direktorat PTM Kemenkes RI & WHO SEAR</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- DATA PASIEN, FKTP & PIN KEAMANAN -->
+  <section class="max-w-5xl mx-auto px-4 pt-5 w-full">
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 print-box">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-teal-700">Identitas Pasien & Konfigurasi Backend</h2>
+        <span id="current-date" class="text-xs text-slate-500 font-medium"></span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Nama Pasien</label>
+          <input type="text" id="pt-name" placeholder="Contoh: Tn. Budi" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">No. RM / NIK / Usia</label>
+          <input type="text" id="pt-rm" placeholder="Contoh: RM-00124 / 58 Thn" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Nama FKTP / Puskesmas</label>
+          <input type="text" id="pt-fktp" placeholder="Contoh: Puskesmas Ungaran" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Pemeriksa</label>
+          <input type="text" id="pt-doc" placeholder="Nama Nakes" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">PIN Akses Database</label>
+          <input type="password" id="pt-pin" placeholder="PIN Puskesmas" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm bg-amber-50/50">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="bg-white shadow-sm sticky top-0 z-20 border-b border-slate-200 overflow-x-auto mt-4 no-print">
+    <div class="max-w-5xl mx-auto px-2 flex whitespace-nowrap text-sm">
+      <button onclick="switchTab('who')" id="tab-who" class="tab-btn tab-active px-4 py-3.5 transition">1. Carta Prediksi PTM (WHO)</button>
+      <button onclick="switchTab('asa')" id="tab-asa" class="tab-btn px-4 py-3.5 text-slate-600 hover:text-teal-700 transition">2. Stroke Risk (ASA)</button>
+      <button onclick="switchTab('abcd2')" id="tab-abcd2" class="tab-btn px-4 py-3.5 text-slate-600 hover:text-teal-700 transition">3. Skor ABCD² (TIA)</button>
+      <button onclick="switchTab('moca')" id="tab-moca" class="tab-btn px-4 py-3.5 text-slate-600 hover:text-teal-700 transition">4. Skrining MoCA-Ina</button>
+      <button onclick="switchTab('akut')" id="tab-akut" class="tab-btn px-4 py-3.5 text-slate-600 hover:text-teal-700 transition">5. Triase Akut & Rujukan WA</button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="max-w-5xl mx-auto px-4 py-5 flex-grow w-full">
+
+    <!-- ================= TAB 1: CARTA WHO ================= -->
+    <section id="sec-who" class="tab-content space-y-6">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-box">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b pb-4 mb-5">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">Tabel Prediksi Risiko Kardiovaskular / Stroke 10 Tahun (WHO 2019 - Asia Tenggara)</h2>
+            <p class="text-xs text-slate-500">Skrining Tahap 1 untuk usia ≥ 40 tahun</p>
+          </div>
+          <div class="flex bg-slate-100 p-1 rounded-lg text-xs font-semibold no-print">
+            <button onclick="setWhoMode('lab')" id="btn-mode-lab" class="px-3 py-1.5 rounded-md bg-teal-600 text-white shadow-sm">Berbasis Lab (Kolesterol & DM)</button>
+            <button onclick="setWhoMode('nonlab')" id="btn-mode-nonlab" class="px-3 py-1.5 rounded-md text-slate-600">Non-Lab (IMT / BMI)</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Usia Pasien (Tahun)</label>
+            <select id="who-age" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+              <option value="0">40 - 44 tahun</option>
+              <option value="1">45 - 49 tahun</option>
+              <option value="2">50 - 54 tahun</option>
+              <option value="3">55 - 59 tahun</option>
+              <option value="4">60 - 64 tahun</option>
+              <option value="5">65 - 69 tahun</option>
+              <option value="6">70 - 74 tahun</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Jenis Kelamin</label>
+            <select id="who-sex" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+              <option value="men">Laki-laki</option>
+              <option value="women">Perempuan</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Status Merokok</label>
+            <select id="who-smoke" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+              <option value="nonsmoker">Tidak Merokok</option>
+              <option value="smoker">Merokok (Aktif / Riwayat berhenti < 1 thn)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Tekanan Darah Sistolik / Diastolik (mmHg)</label>
+            <div class="flex gap-2">
+              <input type="number" id="who-sbp" value="130" placeholder="Sistolik" class="w-1/2 border border-slate-300 rounded-lg p-2.5 text-sm">
+              <input type="number" id="who-dbp" value="80" placeholder="Diastolik" class="w-1/2 border border-slate-300 rounded-lg p-2.5 text-sm">
+            </div>
+          </div>
+
+          <!-- Lab Inputs -->
+          <div id="who-lab-inputs" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 bg-teal-50/50 p-4 rounded-lg border border-teal-100">
+            <div>
+              <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Status Diabetes Melitus (GDP > 125 mg/dL)</label>
+              <select id="who-dm" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                <option value="nodm">Tidak Diabetes</option>
+                <option value="dm">Ya, Terdiagnosis Diabetes Melitus</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Kolesterol Total (mg/dL)</label>
+              <input type="number" id="who-chol" value="190" placeholder="Contoh: 210" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+              <p class="text-[11px] text-slate-500 mt-1">*Otomatis dikonversi ke mmol/L (mg/dL ÷ 38.67)</p>
+            </div>
+          </div>
+
+          <!-- Non-Lab Inputs -->
+          <div id="who-nonlab-inputs" class="hidden md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/50 p-4 rounded-lg border border-amber-100">
+            <div>
+              <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Berat Badan (kg)</label>
+              <input type="number" id="who-weight" value="65" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Tinggi Badan (cm)</label>
+              <input type="number" id="who-height" value="160" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+            </div>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer bg-slate-100 p-3 rounded-lg">
+              <input type="checkbox" id="who-prev-cvd" class="w-4 h-4 text-teal-600 rounded">
+              <span>Pasien sudah memiliki riwayat Penyakit Kardiovaskular sebelumnya (Stroke / TIA / PJK / Infark Miokard)</span>
+            </label>
+          </div>
+        </div>
+
+        <button onclick="hitungWHO()" class="mt-5 w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg shadow transition no-print">Hitung Prediksi Risiko Stroke (WHO)</button>
+
+        <div id="who-result" class="hidden mt-6 p-5 rounded-xl border-2"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 2: STROKE RISK ASSESSMENT (ASA) ================= -->
+    <section id="sec-asa" class="tab-content hidden space-y-6">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-box">
+        <h2 class="text-lg font-bold text-slate-800">Stroke Risk Assessment (American Stroke Association)</h2>
+        <p class="text-xs text-slate-500 mb-4">Pilih jawaban sesuai kondisi pasien ("Iya" atau "Tidak Tahu" bernilai Risiko Tinggi)</p>
+
+        <div id="asa-questions" class="space-y-2.5"></div>
+
+        <button onclick="hitungASA()" class="mt-5 w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg shadow transition no-print">Evaluasi Risiko (ASA)</button>
+
+        <div id="asa-result" class="hidden mt-6 p-5 rounded-xl border"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: SKOR ABCD2 ================= -->
+    <section id="sec-abcd2" class="tab-content hidden space-y-6">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-box">
+        <h2 class="text-lg font-bold text-slate-800">Kalkulator Skor ABCD² (Prediksi Risiko Stroke Akut Pasca-TIA)</h2>
+        <p class="text-xs text-slate-500 mb-5">Mengevaluasi risiko serangan stroke akut pada pasien pasca Transient Ischemic Attack (TIA)</p>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">A - Age (Usia Pasien)</label>
+            <select id="abcd-a" class="w-full border rounded-lg p-2.5 text-sm">
+              <option value="0">< 60 Tahun (0 Poin)</option>
+              <option value="1">≥ 60 Tahun (1 Poin)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">B - Blood Pressure (Tekanan Darah Saat Pemeriksaan)</label>
+            <select id="abcd-b" class="w-full border rounded-lg p-2.5 text-sm">
+              <option value="0">< 140/90 mmHg (0 Poin)</option>
+              <option value="1">Sistolik ≥ 140 mmHg dan/atau Diastolik ≥ 90 mmHg (1 Poin)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">C - Clinical Features (Gejala Klinis TIA)</label>
+            <select id="abcd-c" class="w-full border rounded-lg p-2.5 text-sm">
+              <option value="0">Gejala lain / Tidak ada kelemahan maupun gangguan bicara (0 Poin)</option>
+              <option value="1">Gangguan bicara (pelo/afasia) TANPA kelemahan motorik (1 Poin)</option>
+              <option value="2">Kelemahan sisi tubuh unilateral / separuh badan (2 Poin)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">D - Duration (Durasi Berlangsungnya Gejala TIA)</label>
+            <select id="abcd-d1" class="w-full border rounded-lg p-2.5 text-sm">
+              <option value="0">< 10 Menit (0 Poin)</option>
+              <option value="1">10 – 59 Menit (1 Poin)</option>
+              <option value="2">≥ 60 Menit (2 Poin)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">D - Diabetes Melitus</label>
+            <select id="abcd-d2" class="w-full border rounded-lg p-2.5 text-sm">
+              <option value="0">Tidak ada riwayat Diabetes (0 Poin)</option>
+              <option value="1">Ya, menderita Diabetes Melitus (1 Poin)</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="hitungABCD2()" class="mt-5 w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg shadow transition no-print">Hitung Skor ABCD²</button>
+
+        <div id="abcd2-result" class="hidden mt-6 p-5 rounded-xl border"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: SKRINING MOCA-INA ================= -->
+    <section id="sec-moca" class="tab-content hidden space-y-6">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-box">
+        <h2 class="text-lg font-bold text-slate-800">Montreal Cognitive Assessment Versi Indonesia (MoCA-Ina)</h2>
+        <p class="text-xs text-slate-500 mb-4">Skrining Tahap 2 pada pasien Risiko Tinggi (>20%) untuk deteksi dini gangguan kognitif / CSVD</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">1. Visuospasial / Eksekutif (Maks 5 Poin)</label>
+            <input type="number" id="moca-1" min="0" max="5" value="5" class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">2. Penamaan / Naming (Maks 3 Poin)</label>
+            <input type="number" id="moca-2" min="0" max="3" value="3" class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">3. Atensi (Maks 6 Poin)</label>
+            <input type="number" id="moca-3" min="0" max="6" value="6" class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">4. Bahasa (Maks 3 Poin)</label>
+            <input type="number" id="moca-4" min="0" max="3" value="3" class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">5. Abstraksi (Maks 2 Poin)</label>
+            <input type="number" id="moca-5" min="0" max="2" value="2" class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">6. Memori / Delayed Recall (Maks 5 Poin)</label>
+            <input type="number" id="moca-6" min="0" max="5" value="5" class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">7. Orientasi (Maks 6 Poin)</label>
+            <input type="number" id="moca-7" min="0" max="6" value="6" class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div class="flex items-center">
+            <label class="flex items-center gap-2 text-sm font-medium text-slate-700 bg-slate-100 p-3 rounded-lg w-full cursor-pointer">
+              <input type="checkbox" id="moca-edu" checked class="w-4 h-4 text-teal-600 rounded">
+              <span>Pendidikan formal pasien ≤ 12 Tahun (+1 Poin koreksi)</span>
+            </label>
+          </div>
+        </div>
+
+        <button onclick="hitungMoca()" class="mt-5 w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg shadow transition no-print">Hitung Total Skor MoCA-Ina</button>
+
+        <div id="moca-result" class="hidden mt-6 p-5 rounded-xl border"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 5: TRIASE AKUT & PRE-NOTIFIKASI WA ================= -->
+    <section id="sec-akut" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-red-200 print-box">
+          <span class="bg-red-100 text-red-700 text-xs font-bold px-2.5 py-1 rounded">FASE HIPERAKUT (< 6 JAM)</span>
+          <h3 class="text-lg font-bold text-slate-800 mt-2">Form Pre-Notifikasi Rujukan Stroke Akut</h3>
+          <div class="space-y-3 text-xs mt-3">
+            <div>
+              <label class="font-semibold text-slate-700 block mb-1">Waktu Onset Serangan</label>
+              <input type="text" id="akut-onset" placeholder="Contoh: 2 jam yang lalu" class="w-full border rounded-lg p-2">
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700 block mb-1">Gejala BE-FAST</label>
+              <input type="text" id="akut-gejala" placeholder="Contoh: Hemiparesis dextra" class="w-full border rounded-lg p-2">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">Tekanan Darah & Nadi</label>
+                <input type="text" id="akut-td" placeholder="Contoh: 180/100 mmHg" class="w-full border rounded-lg p-2">
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">Gula Darah Acak (GDA)</label>
+                <input type="text" id="akut-gda" placeholder="Contoh: 145 mg/dL" class="w-full border rounded-lg p-2">
+              </div>
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700 block mb-1">Tindakan Awal FKTP</label>
+              <input type="text" id="akut-tindakan" value="Stabilisasi ABC, pasang IV line, cek GDA" class="w-full border rounded-lg p-2">
+            </div>
+          </div>
+          <div class="flex gap-2 mt-4 no-print">
+            <button onclick="kirimRujukanWA()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-3 rounded-lg text-xs shadow transition">📲 Kirim Rujukan WA</button>
+            <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white font-semibold py-2.5 px-3 rounded-lg text-xs shadow transition">🖨️ Cetak PDF</button>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-box">
+          <span class="bg-teal-100 text-teal-800 text-xs font-bold px-2.5 py-1 rounded">PREVENSI SEKUNDER</span>
+          <h3 class="text-lg font-bold text-slate-800 mt-2">Protokol Obat & Target Pengendalian</h3>
+          <div class="text-xs space-y-3 mt-3 text-slate-700">
+            <div class="p-3 bg-slate-50 rounded-lg border">
+              <p class="font-bold text-slate-900 mb-1">Alur Tatalaksana Hipertensi FKTP:</p>
+              <ol class="list-decimal pl-4 space-y-0.5">
+                <li>TD ≥ 140/90: Mulai <b>Amlodipine 5 mg</b>.</li>
+                <li>Belum capai target: Naikkan <b>Amlodipine 10 mg</b>.</li>
+                <li>Langkah 4-5: Tambah <b>Lensinopril 10-20 mg</b>.</li>
+                <li>Langkah 6-7: Tambah <b>HCT 25-50 mg</b>. Rujuk FKRTL jika gagal.</li>
+              </ol>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-lg border">
+              <p class="font-bold text-slate-900 mb-1">Target AHA/ASA:</p>
+              <ul class="list-disc pl-4 space-y-0.5">
+                <li>TD < 130/80 mmHg | LDL < 70 mg/dL (Statin)</li>
+                <li>HbA1c ≤ 7% | IMT < 25 kg/m²</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-8">
+    <p>Aplikasi <b>Deteksi Stroke FKTP</b> • Dikembangkan untuk Pelatihan Teknis Penanggulangan Stroke bagi Dokter dan Perawat</p>
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/GANTI_DENGAN_URL_ANDA/exec";
+    let lastReportText = "";
+    let lastPayload = {};
+
+    const todayStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('current-date').innerText = todayStr;
+
+    function getPatientHeader() {
+      const name = document.getElementById('pt-name').value || '-';
+      const rm = document.getElementById('pt-rm').value || '-';
+      const fktp = document.getElementById('pt-fktp').value || '-';
+      const doc = document.getElementById('pt-doc').value || '-';
+      return `*LAPORAN SKRINING DETEKSI STROKE FKTP*
+📅 Tanggal: ${todayStr}
+🏥 FKTP: ${fktp}
+👤 Nama Pasien: ${name}
+🆔 No. RM/Usia: ${rm}
+👨‍⚕️ Pemeriksa: ${doc}
+-----------------------------------
+`;
+    }
+
+    function getActionButtonsHTML() {
+      return `
+        <div class="flex flex-wrap gap-2 mt-4 pt-3 border-t border-black/10 no-print">
+          <button onclick="simpanKeSpreadsheet(this)" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition">
+            ☁️ Simpan ke Spreadsheet
+          </button>
+          <button onclick="kirimWA()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition">
+            📲 Kirim ke WhatsApp
+          </button>
+          <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition">
+            🖨️ Cetak / PDF
+          </button>
+        </div>
+      `;
+    }
+
+    function kirimWA() {
+      window.open(`https://wa.me/?text=${encodeURIComponent(getPatientHeader() + lastReportText)}`, '_blank');
+    }
+
+    async function simpanKeSpreadsheet(btnElement) {
+      const pin = document.getElementById('pt-pin').value;
+      if (pin !== "1234") { // PIN Default Puskesmas
+        alert("PIN Akses Database salah atau kosong! Masukkan PIN yang benar (Contoh default: 1234).");
+        return;
+      }
+      if (GOOGLE_SCRIPT_URL.includes("GANTI_DENGAN_URL_ANDA")) {
+        alert("URL Google Apps Script belum dikonfigurasi di file index.html!");
+        return;
+      }
+
+      const payload = {
+        fktp: document.getElementById('pt-fktp').value || '-',
+        pemeriksa: document.getElementById('pt-doc').value || '-',
+        namaPasien: document.getElementById('pt-name').value || '-',
+        rm: document.getElementById('pt-rm').value || '-',
+        pin: pin,
+        ...lastPayload
+      };
+
+      const origText = btnElement.innerHTML;
+      btnElement.disabled = true;
+      btnElement.innerHTML = "⏳ Menyimpan...";
+
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        btnElement.innerHTML = "✅ Tersimpan!";
+        btnElement.className = "bg-teal-700 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow";
+      } catch (err) {
+        alert("Gagal: " + err.message);
+        btnElement.disabled = false;
+        btnElement.innerHTML = origText;
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('tab-active'));
+      document.getElementById('sec-' + tabId).classList.remove('hidden');
+      document.getElementById('tab-' + tabId).classList.add('tab-active');
+    }
+
+    let whoMode = 'lab';
+    function setWhoMode(mode) {
+      whoMode = mode;
+      if (mode === 'lab') {
+        document.getElementById('who-lab-inputs').classList.remove('hidden');
+        document.getElementById('who-nonlab-inputs').classList.add('hidden');
+        document.getElementById('btn-mode-lab').className = 'px-3 py-1.5 rounded-md bg-teal-600 text-white shadow-sm';
+        document.getElementById('btn-mode-nonlab').className = 'px-3 py-1.5 rounded-md text-slate-600';
+      } else {
+        document.getElementById('who-lab-inputs').classList.add('hidden');
+        document.getElementById('who-nonlab-inputs').classList.remove('hidden');
+        document.getElementById('btn-mode-nonlab').className = 'px-3 py-1.5 rounded-md bg-teal-600 text-white shadow-sm';
+        document.getElementById('btn-mode-lab').className = 'px-3 py-1.5 rounded-md text-slate-600';
+      }
+    }
+
+    // Matriks data Carta WHO di-load otomatis
+    const WHO_DATA = {
+      lab: {
+        nodm: {
+          men: {
+            nonsmoker: [
+              [[1,1,2,2,3],[2,2,2,3,3],[2,3,3,4,4],[4,4,4,5,6],[5,6,6,7,8]],
+              [[2,2,2,2,3],[2,3,3,4,4],[3,4,4,5,5],[5,5,6,6,8],[7,7,8,9,10]],
+              [[2,3,3,3,4],[3,4,4,5,5],[4,5,6,6,7],[6,7,8,9,10],[9,9,10,12,13]],
+              [[3,4,4,5,5],[5,5,6,6,7],[6,7,8,9,10],[8,9,10,11,13],[11,12,13,15,17]],
+              [[5,5,6,7,8],[6,7,8,9,10],[8,9,10,12,13],[11,12,13,15,17],[14,16,17,19,22]],
+              [[7,8,9,10,11],[9,10,11,12,14],[11,13,14,16,18],[15,16,18,20,22],[19,20,22,25,28]],
+              [[10,11,12,14,15],[13,14,15,17,19],[16,17,19,21,23],[19,21,23,26,29],[24,26,29,32,35]]
+            ],
+            smoker: [
+              [[2,2,3,3,4],[3,3,4,5,6],[4,5,6,7,8],[6,7,8,10,12],[9,10,12,14,17]],
+              [[3,3,4,4,5],[4,5,5,6,8],[6,6,7,9,10],[8,9,10,12,14],[11,13,14,17,20]],
+              [[4,4,5,6,7],[5,6,7,8,10],[7,8,10,11,13],[10,11,13,15,18],[14,15,18,20,23]],
+              [[5,6,7,8,9],[7,8,9,11,12],[10,11,12,14,16],[13,14,16,18,21],[17,19,21,24,28]],
+              [[7,8,9,10,12],[9,11,12,14,16],[12,14,15,18,20],[16,18,20,23,26],[21,23,26,29,33]],
+              [[10,11,12,14,16],[12,14,15,17,20],[16,18,20,22,25],[20,22,25,27,31],[25,28,31,34,38]],
+              [[13,15,16,18,20],[16,18,20,22,25],[20,22,25,27,30],[25,27,30,33,37],[30,33,36,40,44]]
+            ]
+          },
+          women: {
+            nonsmoker: [
+              [[1,1,1,1,2],[1,1,2,2,2],[2,2,2,3,3],[3,3,3,3,4],[4,4,4,5,5]],
+              [[1,2,2,2,2],[2,2,2,3,3],[3,3,3,4,4],[4,4,4,5,5],[5,5,6,6,7]],
+              [[2,2,2,3,3],[3,3,3,4,4],[4,4,4,5,5],[5,5,5,6,6],[6,7,7,8,8]],
+              [[3,3,3,4,4],[4,4,4,5,5],[5,5,6,6,7],[6,7,7,8,8],[8,8,9,10,11]],
+              [[4,5,5,5,6],[5,6,6,7,7],[7,7,8,8,9],[9,9,10,10,11],[11,11,12,13,14]],
+              [[6,7,7,7,8],[8,8,9,9,10],[9,10,10,11,12],[12,12,13,13,14],[14,15,16,16,17]],
+              [[9,9,10,10,11],[11,11,12,12,13],[13,14,14,15,15],[16,16,17,18,18],[18,19,20,21,22]]
+            ],
+            smoker: [
+              [[2,2,2,2,3],[2,2,3,3,4],[3,4,4,5,5],[6,7,7,8,9],[8,9,10,11,12]],
+              [[2,3,3,3,4],[3,4,4,5,5],[5,6,7,7,8],[7,8,9,10,11],[10,11,12,13,14]],
+              [[3,4,4,5,6],[5,6,6,7,8],[7,8,8,9,10],[9,10,11,12,13],[12,13,14,15,17]],
+              [[5,6,6,7,8],[7,8,8,9,10],[9,10,11,11,12],[11,12,13,14,16],[15,16,17,18,20]],
+              [[7,8,8,9,10],[9,10,10,11,12],[11,12,13,14,15],[14,15,16,17,19],[18,19,20,21,23]],
+              [[10,10,11,12,12],[12,13,13,14,15],[15,15,16,17,18],[18,19,20,21,22],[21,23,24,25,27]],
+              [[13,13,14,15,16],[15,16,17,18,19],[18,19,20,21,22],[22,23,24,25,26],[26,27,28,30,31]]
+            ]
+          }
+        },
+        dm: {
+          men: {
+            nonsmoker: [
+              [[2,3,3,4,4],[4,4,4,5,6],[5,6,6,8,9],[7,8,9,11,13],[11,12,13,15,18]],
+              [[3,4,4,5,6],[5,5,6,7,8],[7,7,8,10,11],[9,10,11,13,16],[13,14,16,18,21]],
+              [[4,5,6,6,8],[6,7,8,9,10],[8,9,10,12,14],[11,13,14,16,19],[15,17,19,22,25]],
+              [[6,7,7,9,10],[8,9,10,11,13],[10,12,13,15,18],[14,15,17,20,23],[18,20,23,26,30]],
+              [[8,9,10,11,13],[10,11,13,15,17],[13,15,17,19,22],[17,19,21,24,28],[22,25,27,31,35]],
+              [[10,12,13,15,17],[13,15,17,19,21],[17,19,21,24,27],[21,24,26,30,33],[27,30,33,37,41]],
+              [[14,16,17,19,22],[17,19,22,24,27],[22,24,26,29,33],[27,29,32,36,40],[32,36,39,43,47]]
+            ],
+            smoker: [
+              [[5,5,6,8,10],[7,8,9,11,14],[10,11,13,15,19],[14,16,18,21,26],[19,22,25,29,35]],
+              [[6,7,8,10,12],[8,9,11,13,16],[12,13,15,18,22],[16,18,21,24,29],[22,25,28,33,38]],
+              [[7,8,10,12,14],[10,12,13,16,19],[14,16,18,21,25],[19,21,24,28,33],[25,28,32,36,42]],
+              [[9,11,12,14,17],[12,14,16,19,22],[16,19,21,25,29],[22,24,28,32,37],[28,31,35,40,46]],
+              [[12,13,15,17,20],[15,17,19,22,26],[20,22,25,28,33],[25,28,32,36,41],[32,35,40,44,50]],
+              [[15,16,19,21,24],[19,21,23,26,30],[23,26,29,33,37],[29,32,36,40,45],[36,40,44,49,54]],
+              [[18,20,23,25,29],[23,25,28,31,35],[28,31,34,38,42],[34,37,41,45,50],[41,45,49,54,59]]
+            ]
+          },
+          women: {
+            nonsmoker: [
+              [[2,3,3,3,4],[3,4,4,5,6],[5,5,6,7,7],[6,7,8,9,10],[8,9,10,11,12]],
+              [[3,3,4,5,5],[4,5,5,6,7],[6,7,7,8,9],[8,8,9,10,11],[10,11,12,13,15]],
+              [[4,4,5,5,6],[6,6,7,8,8],[7,8,9,10,11],[9,10,11,13,14],[12,13,14,16,17]],
+              [[6,6,7,7,8],[7,8,9,10,10],[9,10,11,12,13],[12,13,14,15,17],[15,16,17,19,20]],
+              [[8,8,9,9,10],[10,10,11,12,13],[12,13,14,15,16],[15,16,17,18,20],[19,20,21,22,24]],
+              [[10,11,12,12,13],[13,14,14,15,16],[15,16,17,18,19],[19,20,21,22,24],[23,24,25,27,28]],
+              [[14,15,15,16,17],[17,17,18,19,20],[20,21,22,23,24],[23,25,26,27,28],[28,29,30,32,33]]
+            ],
+            smoker: [
+              [[5,5,6,7,8],[7,8,9,10,11],[10,11,13,15,17],[14,15,17,19,22],[18,20,23,26,29]],
+              [[6,7,8,9,10],[8,9,10,12,13],[12,13,15,17,19],[16,18,20,22,25],[21,23,25,28,32]],
+              [[8,9,10,12,13],[11,12,13,15,17],[14,16,17,19,21],[18,20,22,24,27],[24,26,28,31,34]],
+              [[10,11,13,14,15],[13,15,16,17,19],[17,18,20,22,24],[21,23,25,27,30],[27,29,31,34,37]],
+              [[13,14,15,16,18],[16,17,19,20,22],[20,21,23,25,27],[25,26,28,31,33],[30,32,34,37,40]],
+              [[16,17,18,19,21],[20,21,22,24,25],[24,25,27,28,30],[28,30,32,34,36],[34,36,38,40,43]],
+              [[20,21,22,23,24],[23,25,26,27,29],[28,29,31,32,34],[33,34,36,38,40],[38,40,42,44,46]]
+            ]
+          }
+        }
+      },
+      nonlab: {
+        men: {
+          nonsmoker: [
+            [[1,1,2,2,2],[2,2,2,3,3],[2,3,3,4,4],[4,4,5,6,7],[5,6,7,8,10]],
+            [[2,2,2,2,3],[2,3,3,4,4],[3,4,4,5,6],[5,6,6,7,8],[7,8,9,10,12]],
+            [[2,3,3,4,4],[3,4,4,5,6],[5,5,6,7,8],[7,7,8,9,11],[9,10,11,13,15]],
+            [[4,4,4,5,6],[5,5,6,7,8],[7,7,8,9,10],[9,10,11,12,14],[12,13,15,16,18]],
+            [[5,6,6,7,8],[7,8,8,9,10],[9,10,11,12,14],[12,13,14,16,18],[15,17,19,21,23]],
+            [[8,8,9,10,11],[10,11,12,13,14],[12,14,15,16,18],[16,17,19,21,22],[20,22,24,26,28]],
+            [[11,12,13,14,15],[14,15,16,17,18],[17,19,20,21,23],[21,23,25,26,28],[26,28,30,32,34]]
+          ],
+          smoker: [
+            [[2,3,3,4,5],[3,4,5,6,7],[5,6,7,8,10],[7,8,10,12,14],[10,12,14,17,20]],
+            [[3,4,4,5,6],[4,5,6,7,8],[6,7,9,10,12],[9,10,12,14,17],[13,15,17,20,23]],
+            [[4,5,6,7,8],[6,7,8,9,11],[8,9,11,12,14],[11,13,15,17,20],[15,18,20,23,27]],
+            [[6,7,7,8,10],[8,9,10,11,13],[11,12,13,15,17],[14,16,18,20,23],[19,21,24,27,30]],
+            [[8,9,10,11,12],[10,12,13,14,16],[14,15,17,19,21],[18,20,22,24,27],[23,25,28,31,34]],
+            [[11,12,13,14,16],[14,15,16,18,20],[18,19,21,23,25],[22,24,26,29,31],[28,30,33,36,39]],
+            [[15,16,17,18,20],[18,20,21,23,24],[23,24,26,28,30],[28,30,32,34,36],[34,36,39,41,44]]
+          ]
+        },
+        women: {
+          nonsmoker: [
+            [[1,1,1,1,1],[2,2,2,2,2],[2,2,3,3,3],[3,3,3,4,4],[5,5,5,5,6]],
+            [[2,2,2,2,2],[2,2,2,3,3],[3,3,3,4,4],[4,5,5,5,5],[6,6,7,7,7]],
+            [[2,2,3,3,3],[3,3,3,4,4],[4,4,5,5,5],[6,6,6,7,7],[8,8,8,9,9]],
+            [[3,3,4,4,4],[4,5,5,5,5],[6,6,6,7,7],[8,8,8,9,9],[10,10,11,11,12]],
+            [[5,5,5,5,6],[6,6,7,7,7],[8,8,8,9,9],[10,10,11,11,12],[13,13,14,14,15]],
+            [[7,7,7,8,8],[9,9,9,10,10],[11,11,11,12,12],[13,14,14,15,15],[16,17,18,18,19]],
+            [[10,10,11,11,11],[12,12,13,13,14],[15,15,16,16,17],[17,18,19,19,20],[21,22,22,23,24]]
+          ],
+          smoker: [
+            [[3,3,3,3,4],[4,4,4,5,5],[5,6,6,7,7],[8,8,9,9,10],[11,11,12,13,14]],
+            [[4,4,4,4,5],[5,5,6,6,6],[7,7,8,8,9],[9,10,11,11,12],[13,14,14,15,16]],
+            [[5,5,5,6,6],[6,7,7,8,8],[9,9,10,10,11],[11,12,13,14,14],[15,16,17,18,19]],
+            [[6,7,7,7,8],[8,9,9,10,10],[11,11,12,13,13],[14,15,15,16,17],[18,19,20,21,22]],
+            [[8,9,9,10,10],[11,11,12,12,13],[13,14,15,16,16],[17,18,19,20,21],[21,22,23,25,26]],
+            [[11,11,12,12,13],[14,14,15,15,16],[17,18,18,19,20],[21,22,22,23,24],[25,26,27,29,30]],
+            [[14,15,15,16,17],[17,18,19,19,20],[21,22,22,23,24],[25,26,27,28,29],[30,31,32,33,34]]
+          ]
+        }
+      }
+    };
+
+    function getSbpIdx(sbp) {
+      if (sbp < 120) return 0;
+      if (sbp < 140) return 1;
+      if (sbp < 160) return 2;
+      if (sbp < 180) return 3;
+      return 4;
+    }
+    function getCholIdx(mmol) {
+      if (mmol < 4) return 0;
+      if (mmol < 5) return 1;
+      if (mmol < 6) return 2;
+      if (mmol < 7) return 3;
+      return 4;
+    }
+    function getBmiIdx(bmi) {
+      if (bmi < 20) return 0;
+      if (bmi < 25) return 1;
+      if (bmi < 30) return 2;
+      if (bmi < 35) return 3;
+      return 4;
+    }
+
+    function hitungWHO() {
+      const ageIdx = parseInt(document.getElementById('who-age').value);
+      const sex = document.getElementById('who-sex').value;
+      const smoke = document.getElementById('who-smoke').value;
+      const sbp = parseFloat(document.getElementById('who-sbp').value) || 120;
+      const dbp = parseFloat(document.getElementById('who-dbp').value) || 80;
+      const prevCvd = document.getElementById('who-prev-cvd').checked;
+
+      const sbpIdx = getSbpIdx(sbp);
+      let score = 0, extraInfo = '', extraPlain = '';
+
+      if (whoMode === 'lab') {
+        const dm = document.getElementById('who-dm').value;
+        const cholMg = parseFloat(document.getElementById('who-chol').value) || 180;
+        const cholMmol = (cholMg / 38.67).toFixed(2);
+        score = WHO_DATA.lab[dm][sex][smoke][ageIdx][sbpIdx][getCholIdx(cholMmol)];
+        extraInfo = `Kolesterol Total: <b>${cholMg} mg/dL</b>`;
+        extraPlain = `Kolesterol: ${cholMg} mg/dL | DM: ${dm === 'dm' ? 'Ya' : 'Tidak'}`;
+      } else {
+        const weight = parseFloat(document.getElementById('who-weight').value) || 60;
+        const heightCm = parseFloat(document.getElementById('who-height').value) || 160;
+        const bmi = (weight / Math.pow(heightCm / 100, 2)).toFixed(1);
+        score = WHO_DATA.nonlab[sex][smoke][ageIdx][sbpIdx][getBmiIdx(bmi)];
+        extraInfo = `IMT: <b>${bmi} kg/m²</b>`;
+        extraPlain = `IMT: ${bmi} kg/m²`;
+      }
+
+      if (prevCvd) score = Math.max(score, 35);
+
+      let katText = '', tatalaksana = '', followup = '';
+      if (score < 5) { katText = 'RISIKO RENDAH (<5%)'; tatalaksana = 'Konseling diet rendah lemak, aktivitas fisik, UBM.'; followup = 'Follow-up 1 tahun.'; }
+      else if (score < 10) { katText = 'RISIKO SEDANG (5-<10%)'; tatalaksana = 'Konseling gaya hidup, pertimbangkan obat HT/DM.'; followup = 'Follow-up 3-6 bulan.'; }
+      else if (score < 20) { katText = 'RISIKO SEDANG-TINGGI (10-<20%)'; tatalaksana = 'Intervensi gaya hidup & terapi obat HT/DM.'; followup = 'Follow-up tiap 3 bulan.'; }
+      else if (score < 30) { katText = 'RISIKO TINGGI (20-<30%)'; tatalaksana = 'Wajib skrining MoCA-Ina & EKG, obat HT/DM/Statin.'; followup = 'Evaluasi 3 bulan, rujuk jika abnormal.'; }
+      else { katText = 'RISIKO SANGAT TINGGI (≥30%)'; tatalaksana = 'Wajib skrining MoCA-Ina & EKG, tatalaksana agresif.'; followup = 'Evaluasi ketat 3 bulan, rujuk jika gagal.'; }
+
+      lastReportText = `*Carta WHO:* TD ${sbp}/${dbp} | ${extraPlain} | Hasil: ${prevCvd ? '>30%' : score + '%'} (${katText})`;
+      lastPayload = {
+        instrumen: `Carta WHO (${whoMode.toUpperCase()})`,
+        parameter: `TD ${sbp}/${dbp} | ${extraPlain}`,
+        skor: prevCvd ? '>30%' : score + '%',
+        kategori: katText,
+        rekomendasi: `${tatalaksana} (${followup})`
+      };
+
+      const resDiv = document.getElementById('who-result');
+      resDiv.className = `mt-6 p-5 rounded-xl border-2 bg-slate-50 border-teal-500`;
+      resDiv.innerHTML = `
+        <div class="flex justify-between items-center mb-2"><span class="font-bold text-teal-900">${katText}</span><span class="text-xl font-extrabold">Risiko: ${prevCvd ? '>30%' : score + '%'}</span></div>
+        <p class="text-xs mb-2">${extraInfo} • TD: ${sbp}/${dbp} mmHg</p>
+        <p class="text-sm"><b>Tatalaksana:</b> ${tatalaksana}<br><b>Follow-up:</b> ${followup}</p>
+        ${getActionButtonsHTML()}
+      `;
+      resDiv.classList.remove('hidden');
+    }
+
+    // Inisialisasi Pertanyaan ASA
+    const ASA_QUESTIONS = [
+      "Tekanan darah > 120/80 mmHg?", "Riwayat Fibrilasi Atrium?", "Gula darah puasa > 100 mg/dL?",
+      "IMT > 25 kg/m²?", "Pola makan tinggi lemak/garam/gula?", "Kolesterol total > 160 mg/dL?",
+      "Terdiagnosis Diabetes Melitus?", "Aktivitas fisik kurang (<150 mnt/mgg)?",
+      "Riwayat pribadi/keluarga stroke/TIA?", "Merokok / Vape?"
+    ];
+    const asaContainer = document.getElementById('asa-questions');
+    ASA_QUESTIONS.forEach((q, i) => {
+      asaContainer.innerHTML += `
+        <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border text-sm">
+          <span>${i + 1}. ${q}</span>
+          <select id="asa-q-${i}" class="border rounded p-1 text-xs font-semibold bg-white"><option value="low">Tidak</option><option value="high">Iya / Tidak Tahu</option></select>
+        </div>`;
+    });
+
+    function hitungASA() {
+      let high = 0, low = 0;
+      ASA_QUESTIONS.forEach((_, i) => { if (document.getElementById(`asa-q-${i}`).value === 'high') high++; else low++; });
+      const isHigh = high > low;
+      const kat = isHigh ? 'BERISIKO TINGGI STROKE' : 'RISIKO RENDAH';
+      const rek = isHigh ? 'Perlu pemeriksaan neurologis fisik & penunjang lab.' : 'Pertahankan gaya hidup sehat.';
+      lastReportText = `*Stroke Risk ASA:* Tinggi=${high}, Rendah=${low} (${kat})`;
+      lastPayload = { instrumen: "Stroke Risk ASA", parameter: "10 Parameter Risiko", skor: `Tinggi:${high}, Rendah:${low}`, kategori: kat, rekomendasi: rek };
+      
+      const res = document.getElementById('asa-result');
+      res.className = `mt-6 p-5 rounded-xl border-2 ${isHigh ? 'bg-red-50 border-red-500 text-red-950' : 'bg-emerald-50 border-emerald-500 text-emerald-950'}`;
+      res.innerHTML = `<h3 class="font-bold">Hasil: Tinggi (${high}) | Rendah (${low})</h3><p class="text-sm"><b>${kat}</b>: ${rek}</p>${getActionButtonsHTML()}`;
+      res.classList.remove('hidden');
+    }
+
+    function hitungABCD2() {
+      const total = parseInt(document.getElementById('abcd-a').value) + parseInt(document.getElementById('abcd-b').value) + parseInt(document.getElementById('abcd-c').value) + parseInt(document.getElementById('abcd-d1').value) + parseInt(document.getElementById('abcd-d2').value);
+      let kat = total <= 3 ? 'RISIKO RENDAH' : total <= 5 ? 'RISIKO SEDANG' : 'RISIKO TINGGI (Wajib Rujuk)';
+      lastReportText = `*Skor ABCD²:* ${total}/7 (${kat})`;
+      lastPayload = { instrumen: "Skor ABCD²", parameter: "Evaluasi Pasca-TIA", skor: `${total}/7`, kategori: kat, rekomendasi: "Pemantauan berkala / Rujukan FKRTL." };
+      
+      const res = document.getElementById('abcd2-result');
+      res.className = `mt-6 p-5 rounded-xl border-2 bg-white border-slate-300`;
+      res.innerHTML = `<h3 class="font-bold text-base">Total Skor: ${total} / 7 - ${kat}</h3>${getActionButtonsHTML()}`;
+      res.classList.remove('hidden');
+    }
+
+    function hitungMoca() {
+      let sum = 0;
+      for (let i = 1; i <= 7; i++) sum += parseInt(document.getElementById('moca-' + i).value) || 0;
+      if (document.getElementById('moca-edu').checked && sum < 30) sum += 1;
+      const normal = sum >= 26;
+      const kat = normal ? 'KOGNITIF NORMAL' : 'INDIKASI GANGGUAN KOGNITIF (Rujuk CSVD)';
+      lastReportText = `*MoCA-Ina:* ${sum}/30 (${kat})`;
+      lastPayload = { instrumen: "Skrining MoCA-Ina", parameter: "Skrining Kognitif", skor: `${sum}/30`, kategori: kat, rekomendasi: normal ? "Normal" : "Rujuk Spesialis Saraf" };
+      
+      const res = document.getElementById('moca-result');
+      res.className = `mt-6 p-5 rounded-xl border-2 ${normal ? 'bg-emerald-50 border-emerald-500' : 'bg-red-50 border-red-500'}`;
+      res.innerHTML = `<h3 class="font-bold">Skor: ${sum}/30 - ${kat}</h3>${getActionButtonsHTML()}`;
+      res.classList.remove('hidden');
+    }
+
+    function kirimRujukanWA() {
+      const msg = `*🚨 PRE-NOTIFIKASI RUJUKAN STROKE AKUT*
+` + getPatientHeader() +
+                  `*Onset:* ${document.getElementById('akut-onset').value}
+` +
+                  `*Gejala:* ${document.getElementById('akut-gejala').value}
+` +
+                  `*TD/HR:* ${document.getElementById('akut-td').value}
+` +
+                  `*GDA:* ${document.getElementById('akut-gda').value}
+` +
+                  `*Tindakan:* ${document.getElementById('akut-tindakan').value}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+  </script>
+</body>
+</html>
