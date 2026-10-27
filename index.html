@@ -4,7 +4,105 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deteksi Stroke - Instrumen Skrining & Tatalaksana FKTP</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com">
+    function hitungTargetTerapi() {
+      const status = document.getElementById('target-status').value;
+      const sbp = parseFloat(document.getElementById('target-sbp').value) || 0;
+      const dbp = parseFloat(document.getElementById('target-dbp').value) || 0;
+      const ldl = parseFloat(document.getElementById('target-ldl').value) || 0;
+      const hba1cStr = document.getElementById('target-hba1c').value;
+      const hba1c = hba1cStr ? parseFloat(hba1cStr) : null;
+
+      // Tentukan target berdasarkan pedoman Kemenkes/AHA
+      const targetSbp = status === 'high' ? 130 : 140;
+      const targetDbp = status === 'high' ? 80 : 90;
+      const targetLdl = status === 'high' ? 70 : 100;
+      const targetHba1c = 7.0;
+
+      let reportLines = [];
+      let allOk = true;
+
+      // Evaluasi Tekanan Darah
+      let bpHtml = '';
+      if (sbp > 0 && dbp > 0) {
+        if (sbp < targetSbp && dbp < targetDbp) {
+          bpHtml = `✅ <b>Tekanan Darah (${sbp}/${dbp} mmHg):</b> TERCAPAI (Target < ${targetSbp}/${targetDbp})`;
+          reportLines.push(`TD ${sbp}/${dbp} (Tercapai)`);
+        } else {
+          bpHtml = `⚠️ <b>Tekanan Darah (${sbp}/${dbp} mmHg):</b> BELUM TERCAPAI (Target < ${targetSbp}/${targetDbp}). <i>Evaluasi kepatuhan obat / Intensifikasi Amlodipine + Lisinopril/HCT.</i>`;
+          reportLines.push(`TD ${sbp}/${dbp} (Belum Tercapai, target <${targetSbp}/${targetDbp})`);
+          allOk = false;
+        }
+      } else {
+         bpHtml = `<i>Tekanan Darah tidak diisi.</i>`;
+      }
+
+      // Evaluasi LDL
+      let ldlHtml = '';
+      if (ldl > 0) {
+        if (ldl < targetLdl) {
+          ldlHtml = `✅ <b>Kolesterol LDL (${ldl} mg/dL):</b> TERCAPAI (Target < ${targetLdl} mg/dL)`;
+          reportLines.push(`LDL ${ldl} (Tercapai)`);
+        } else {
+          ldlHtml = `⚠️ <b>Kolesterol LDL (${ldl} mg/dL):</b> BELUM TERCAPAI (Target < ${targetLdl} mg/dL). <i>Pertimbangkan inisiasi/titrasi Statin (Atorvastatin 20-80 mg).</i>`;
+          reportLines.push(`LDL ${ldl} (Belum Tercapai, target <${targetLdl})`);
+          allOk = false;
+        }
+      } else {
+        ldlHtml = `<i>Kolesterol LDL tidak diisi.</i>`;
+      }
+
+      // Evaluasi HbA1c (Jika ada)
+      let hba1cHtml = '';
+      if (hba1c !== null) {
+        if (hba1c <= targetHba1c) {
+          hba1cHtml = `✅ <b>HbA1c (${hba1c}%):</b> TERCAPAI (Target ≤ 7.0%)`;
+          reportLines.push(`HbA1c ${hba1c}% (Tercapai)`);
+        } else {
+          hba1cHtml = `⚠️ <b>HbA1c (${hba1c}%):</b> BELUM TERCAPAI (Target ≤ 7.0%). <i>Modifikasi diet / intensifikasi Metformin / Sulfonilurea.</i>`;
+          reportLines.push(`HbA1c ${hba1c}% (Belum Tercapai, target <=7.0%)`);
+          allOk = false;
+        }
+      }
+
+      let kesimpulanTxt = allOk ? "Semua parameter yang diisi telah MENCAPAI TARGET optimal." : "Masih terdapat parameter yang BELUM MENCAPAI TARGET. Perlu penyesuaian dosis obat (Stepped-Care) & Kepatuhan Gaya Hidup.";
+      let colorBox = allOk ? "bg-emerald-50 border-emerald-500" : "bg-amber-50 border-amber-500";
+
+      // Siapkan payload untuk WA dan Spreadsheet
+      lastReportText = `*Evaluasi Target Terapi Klinis*
+` +
+                       `*Status:* ${status === 'high' ? 'Risiko Sangat Tinggi / Pasca-Stroke' : 'Risiko Rendah-Sedang'}
+` +
+                       `*Hasil Evaluasi:*
+- ` + reportLines.join('\n- ') + `
+` +
+                       `*Kesimpulan:* ${kesimpulanTxt}`;
+      
+      lastPayload = {
+        instrumen: "Evaluasi Target Terapi Klinis",
+        parameter: `Status: ${status === 'high' ? 'High Risk' : 'Low/Mod Risk'}`,
+        skor: reportLines.join(' | '),
+        kategori: allOk ? "TERCAPAI" : "BELUM TERCAPAI",
+        rekomendasi: kesimpulanTxt
+      };
+
+      const res = document.getElementById('target-result');
+      res.className = `mt-6 p-5 rounded-xl border-2 ${colorBox}`;
+      res.innerHTML = `
+        <h3 class="font-bold text-lg mb-4 text-slate-800 border-b pb-2">Kesimpulan Evaluasi Klinis</h3>
+        <div class="space-y-3 text-sm text-slate-700">
+          <p>${bpHtml}</p>
+          <p>${ldlHtml}</p>
+          ${hba1cHtml ? `<p>${hba1cHtml}</p>` : ''}
+        </div>
+        <div class="mt-4 p-3 bg-white rounded-lg border text-xs font-semibold text-slate-800 shadow-sm">
+          💡 ${kesimpulanTxt}
+        </div>
+        ${getActionButtonsHTML()}
+      `;
+      res.classList.remove('hidden');
+    }
+</script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
@@ -73,6 +171,7 @@
       <button onclick="switchTab('abcd2')" id="tab-abcd2" class="tab-btn px-4 py-3.5 text-slate-600 hover:text-teal-700 transition">3. Skor ABCD² (TIA)</button>
       <button onclick="switchTab('moca')" id="tab-moca" class="tab-btn px-4 py-3.5 text-slate-600 hover:text-teal-700 transition">4. Skrining MoCA-Ina</button>
       <button onclick="switchTab('akut')" id="tab-akut" class="tab-btn px-4 py-3.5 text-slate-600 hover:text-teal-700 transition">5. Triase Akut & Rujukan WA</button>
+      <button onclick="switchTab('target')" id="tab-target" class="tab-btn px-4 py-3.5 text-slate-600 hover:text-teal-700 transition">6. Target Terapi & Klinis</button>
     </div>
   </nav>
 
@@ -348,6 +447,50 @@
         </div>
       </div>
     </section>
+
+
+    
+    <!-- ================= TAB 6: TARGET TERAPI & KLINIS (INTERAKTIF) ================= -->
+    <section id="sec-target" class="tab-content hidden space-y-6">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-box">
+        <span class="bg-teal-100 text-teal-800 text-xs font-bold px-2.5 py-1 rounded">STANDAR KEMENKES RI & AHA/ASA 2026</span>
+        <h2 class="text-xl font-bold text-slate-800 mt-2">Kalkulator Evaluasi Pencapaian Target Terapi</h2>
+        <p class="text-xs text-slate-500 mb-6">Gunakan form ini untuk memantau apakah pasien (terutama prevensi sekunder pasca-stroke/TIA) sudah mencapai target tekanan darah, LDL, dan HbA1c.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Status Pasien & Risiko</label>
+            <select id="target-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-amber-50">
+              <option value="high">Penyintas Stroke / TIA / Riwayat PJK (Risiko Sangat Tinggi)</option>
+              <option value="low">Pencegahan Primer / Risiko Rendah-Sedang (Tanpa PJK)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Tekanan Darah Saat Ini (mmHg)</label>
+            <div class="flex gap-2">
+              <input type="number" id="target-sbp" placeholder="Sistolik (mis: 145)" class="w-1/2 border border-slate-300 rounded-lg p-2.5 text-sm">
+              <input type="number" id="target-dbp" placeholder="Diastolik (mis: 90)" class="w-1/2 border border-slate-300 rounded-lg p-2.5 text-sm">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Kolesterol LDL (mg/dL)</label>
+            <input type="number" id="target-ldl" placeholder="Contoh: 110" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">HbA1c (%) - Khusus Pasien DM</label>
+            <input type="number" step="0.1" id="target-hba1c" placeholder="Kosongkan jika bukan DM. Contoh: 7.5" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+          </div>
+        </div>
+
+        <button onclick="hitungTargetTerapi()" class="mt-5 w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg shadow transition no-print">Evaluasi Pencapaian Target</button>
+
+        <div id="target-result" class="hidden mt-6 p-5 rounded-xl border-2"></div>
+      </div>
+    </section>
+
 
   </main>
 
@@ -744,6 +887,104 @@
                   `*Tindakan:* ${document.getElementById('akut-tindakan').value}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     }
-  </script>
+  
+    function hitungTargetTerapi() {
+      const status = document.getElementById('target-status').value;
+      const sbp = parseFloat(document.getElementById('target-sbp').value) || 0;
+      const dbp = parseFloat(document.getElementById('target-dbp').value) || 0;
+      const ldl = parseFloat(document.getElementById('target-ldl').value) || 0;
+      const hba1cStr = document.getElementById('target-hba1c').value;
+      const hba1c = hba1cStr ? parseFloat(hba1cStr) : null;
+
+      // Tentukan target berdasarkan pedoman Kemenkes/AHA
+      const targetSbp = status === 'high' ? 130 : 140;
+      const targetDbp = status === 'high' ? 80 : 90;
+      const targetLdl = status === 'high' ? 70 : 100;
+      const targetHba1c = 7.0;
+
+      let reportLines = [];
+      let allOk = true;
+
+      // Evaluasi Tekanan Darah
+      let bpHtml = '';
+      if (sbp > 0 && dbp > 0) {
+        if (sbp < targetSbp && dbp < targetDbp) {
+          bpHtml = `✅ <b>Tekanan Darah (${sbp}/${dbp} mmHg):</b> TERCAPAI (Target < ${targetSbp}/${targetDbp})`;
+          reportLines.push(`TD ${sbp}/${dbp} (Tercapai)`);
+        } else {
+          bpHtml = `⚠️ <b>Tekanan Darah (${sbp}/${dbp} mmHg):</b> BELUM TERCAPAI (Target < ${targetSbp}/${targetDbp}). <i>Evaluasi kepatuhan obat / Intensifikasi Amlodipine + Lisinopril/HCT.</i>`;
+          reportLines.push(`TD ${sbp}/${dbp} (Belum Tercapai, target <${targetSbp}/${targetDbp})`);
+          allOk = false;
+        }
+      } else {
+         bpHtml = `<i>Tekanan Darah tidak diisi.</i>`;
+      }
+
+      // Evaluasi LDL
+      let ldlHtml = '';
+      if (ldl > 0) {
+        if (ldl < targetLdl) {
+          ldlHtml = `✅ <b>Kolesterol LDL (${ldl} mg/dL):</b> TERCAPAI (Target < ${targetLdl} mg/dL)`;
+          reportLines.push(`LDL ${ldl} (Tercapai)`);
+        } else {
+          ldlHtml = `⚠️ <b>Kolesterol LDL (${ldl} mg/dL):</b> BELUM TERCAPAI (Target < ${targetLdl} mg/dL). <i>Pertimbangkan inisiasi/titrasi Statin (Atorvastatin 20-80 mg).</i>`;
+          reportLines.push(`LDL ${ldl} (Belum Tercapai, target <${targetLdl})`);
+          allOk = false;
+        }
+      } else {
+        ldlHtml = `<i>Kolesterol LDL tidak diisi.</i>`;
+      }
+
+      // Evaluasi HbA1c (Jika ada)
+      let hba1cHtml = '';
+      if (hba1c !== null) {
+        if (hba1c <= targetHba1c) {
+          hba1cHtml = `✅ <b>HbA1c (${hba1c}%):</b> TERCAPAI (Target ≤ 7.0%)`;
+          reportLines.push(`HbA1c ${hba1c}% (Tercapai)`);
+        } else {
+          hba1cHtml = `⚠️ <b>HbA1c (${hba1c}%):</b> BELUM TERCAPAI (Target ≤ 7.0%). <i>Modifikasi diet / intensifikasi Metformin / Sulfonilurea.</i>`;
+          reportLines.push(`HbA1c ${hba1c}% (Belum Tercapai, target <=7.0%)`);
+          allOk = false;
+        }
+      }
+
+      let kesimpulanTxt = allOk ? "Semua parameter yang diisi telah MENCAPAI TARGET optimal." : "Masih terdapat parameter yang BELUM MENCAPAI TARGET. Perlu penyesuaian dosis obat (Stepped-Care) & Kepatuhan Gaya Hidup.";
+      let colorBox = allOk ? "bg-emerald-50 border-emerald-500" : "bg-amber-50 border-amber-500";
+
+      // Siapkan payload untuk WA dan Spreadsheet
+      lastReportText = `*Evaluasi Target Terapi Klinis*
+` +
+                       `*Status:* ${status === 'high' ? 'Risiko Sangat Tinggi / Pasca-Stroke' : 'Risiko Rendah-Sedang'}
+` +
+                       `*Hasil Evaluasi:*
+- ` + reportLines.join('\n- ') + `
+` +
+                       `*Kesimpulan:* ${kesimpulanTxt}`;
+      
+      lastPayload = {
+        instrumen: "Evaluasi Target Terapi Klinis",
+        parameter: `Status: ${status === 'high' ? 'High Risk' : 'Low/Mod Risk'}`,
+        skor: reportLines.join(' | '),
+        kategori: allOk ? "TERCAPAI" : "BELUM TERCAPAI",
+        rekomendasi: kesimpulanTxt
+      };
+
+      const res = document.getElementById('target-result');
+      res.className = `mt-6 p-5 rounded-xl border-2 ${colorBox}`;
+      res.innerHTML = `
+        <h3 class="font-bold text-lg mb-4 text-slate-800 border-b pb-2">Kesimpulan Evaluasi Klinis</h3>
+        <div class="space-y-3 text-sm text-slate-700">
+          <p>${bpHtml}</p>
+          <p>${ldlHtml}</p>
+          ${hba1cHtml ? `<p>${hba1cHtml}</p>` : ''}
+        </div>
+        <div class="mt-4 p-3 bg-white rounded-lg border text-xs font-semibold text-slate-800 shadow-sm">
+          💡 ${kesimpulanTxt}
+        </div>
+        ${getActionButtonsHTML()}
+      `;
+      res.classList.remove('hidden');
+    }
+</script>
 </body>
 </html>
