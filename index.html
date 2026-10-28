@@ -102,6 +102,73 @@
       `;
       res.classList.remove('hidden');
     }
+
+    // === CEKLIST PENCEGAHAN SEKUNDER ===
+    const SEKUNDER_QUESTIONS = [
+      { q: "1. Pernah menderita stroke atau TIA?", rec: "Risiko berulang tinggi. Lakukan strategi pencegahan komprehensif." },
+      { q: "2. Perlu menjalani tindakan diagnostik etiologi stroke?", rec: "Dianjurkan evaluasi lanjutan (dalam 48 jam) untuk merencanakan prevensi optimal." },
+      { q: "3. Apakah tekanan darah > 130/80 mmHg?", rec: "Pengobatan Hipertensi sangat penting. Target TD < 130/80 mmHg untuk prevensi sekunder." },
+      { q: "4. Apakah pernah diskrining Diabetes Melitus?", rec: "DM memicu stroke berulang. Skrining rutin & Target HbA1c ≤ 7% sangat dianjurkan." },
+      { q: "5. Apakah kadar Kolesterol LDL tinggi?", rec: "Target LDL < 70 mg/dL (atau < 100 untuk PJK). Jika tinggi, inisiasi Atorvastatin 20-80 mg harian." },
+      { q: "6. Apakah gaya hidup kurang aktivitas fisik?", rec: "Lakukan aktivitas aerobik sedang 150 menit/minggu atau aktivitas berat 75 menit/minggu." },
+      { q: "7. Apakah pasien merokok (tembakau/vape)?", rec: "Risiko naik 2x lipat. Wajib konseling UBM (Upaya Berhenti Merokok)." },
+      { q: "8. Apakah perlu dianjurkan mengubah pola makan?", rec: "Fokus pada diet rendah natrium, batasi daging merah & gula, perbanyak buah/sayur/biji-bijian." },
+      { q: "9. Konsumsi alkohol dalam jumlah banyak?", rec: "Wajib menghilangkan atau mengurangi konsumsi alkohol." },
+      { q: "10. Pernah didiagnosis Fibrilasi Atrium (AF)?", rec: "AF meningkatkan risiko stroke 4-5x. Direkomendasikan terapi Antikoagulan Oral." },
+      { q: "11. Apakah indikasi Antiplatelet (Aspirin/Clopidogrel)?", rec: "Untuk stroke iskemik nonkardioembolik/TIA, Antiplatelet (bukan antikoagulan) diindikasikan." },
+      { q: "12. Apakah ada riwayat Sleep Apnea Syndrome?", rec: "Mempengaruhi risiko stroke hingga 40%. Rujuk untuk perawatan CPAP." }
+    ];
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const sekContainer = document.getElementById('sekunder-questions');
+      if (sekContainer) {
+        SEKUNDER_QUESTIONS.forEach((item, i) => {
+          sekContainer.innerHTML += `
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 rounded-lg border text-sm gap-2">
+              <span class="font-medium text-slate-800 w-full sm:w-2/3">${item.q}</span>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="sekq_${i}" value="ya" class="w-4 h-4 text-teal-600"> <span class="text-xs font-semibold text-red-600">Ya</span></label>
+                <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="sekq_${i}" value="tidak" checked class="w-4 h-4 text-teal-600"> <span class="text-xs font-semibold text-emerald-600">Tidak</span></label>
+              </div>
+            </div>
+          `;
+        });
+      }
+    });
+
+    function hitungSekunder() {
+      let notes = [];
+      SEKUNDER_QUESTIONS.forEach((item, i) => {
+        const selected = document.querySelector(`input[name="sekq_${i}"]:checked`);
+        if (selected && selected.value === 'ya') {
+          notes.push(`- <b>${item.q.replace(/^[0-9]+\.\s/g, '')}</b>: ${item.rec}`);
+        }
+      });
+      
+      let htmlRes = `<h3 class="font-bold text-lg mb-2 text-slate-800">Rencana Tindak Lanjut Prevensi Sekunder:</h3>`;
+      if (notes.length > 0) {
+        htmlRes += `<div class="text-sm space-y-2 text-slate-700">${notes.join('<br>')}</div>`;
+        lastReportText = `*Ceklist Prevensi Sekunder:* Teridentifikasi ${notes.length} faktor risiko. Lakukan RTL sesuai pedoman.`;
+      } else {
+        htmlRes += `<p class="text-sm text-emerald-700 font-semibold">✅ Tidak ada faktor risiko sekunder tambahan yang teridentifikasi saat ini. Pertahankan terapi dan kontrol rutin.</p>`;
+        lastReportText = `*Ceklist Prevensi Sekunder:* Stabil, tidak ada keluhan baru.`;
+      }
+      
+      htmlRes += getActionButtonsHTML();
+      
+      lastPayload = {
+        instrumen: "Ceklist Pencegahan Sekunder",
+        parameter: `Terdapat ${notes.length} Faktor`,
+        skor: "-",
+        kategori: notes.length > 0 ? "RTL Dibutuhkan" : "Stabil",
+        rekomendasi: "Tercetak di PDF/WA"
+      };
+
+      const res = document.getElementById('sekunder-result');
+      res.innerHTML = htmlRes;
+      res.classList.remove('hidden');
+    }
+    
 </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -375,9 +442,7 @@
         <h2 class="text-lg font-bold text-slate-800">Montreal Cognitive Assessment Versi Indonesia (MoCA-Ina)</h2>
         <p class="text-xs text-slate-500 mb-4">Skrining Tahap 2 pada pasien Risiko Tinggi (>20%) untuk deteksi dini gangguan kognitif / CSVD</p>
 
-        <div class="bg-amber-100 text-amber-800 text-xs p-3 rounded-lg mb-4 border border-amber-200">
-          <b>💡 Keterangan Lingkar Perut (Obesitas Sentral):</b> Bila pasien memiliki Lingkar Perut melebihi batas normal (Laki-laki > 90 cm, Perempuan > 80 cm), pertimbangkan untuk mengarahkan penilaian menggunakan <b>Carta Prediksi Non-Laboratorium (Berbasis IMT)</b> apabila profil lipid lengkap tidak tersedia.
-        </div>
+        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">1. Visuospasial / Eksekutif (Maks 5 Poin)</label>
@@ -483,7 +548,10 @@
                 <li><b>TD:</b> < 140/90 mmHg (atau < 130/80 untuk risiko tinggi)</li>
                 <li><b>Gula Darah:</b> GDP 80-130, GDS/GD2PP < 180, HbA1c < 7%</li>
                 <li><b>IMT:</b> 18.5 - 25.0 kg/m² (Standar Asia)</li>
-                <li><b>Profil Lipid:</b> Kolesterol Total < 200 (Standar AHA/ASA: < 160), LDL < 70/100/130 (sesuai risiko), HDL > 40/50, TG < 150 mg/dL</li>
+                <li><b>Profil Lipid:</b> Kolesterol Total < 200 (Standar AHA/ASA < 160) & TG < 150 mg/dL.<br>
+                  <span class="ml-2">- <b>LDL:</b> < 130 (Primer), < 100 (Riwayat PJK), < 70 (Pasca-Stroke/Risiko Sangat Tinggi).</span><br>
+                  <span class="ml-2">- <b>HDL:</b> > 40 (Laki-laki), > 50 (Perempuan).</span>
+                </li>
               </ul>
             </div>
           </div>
@@ -1044,6 +1112,73 @@
       `;
       res.classList.remove('hidden');
     }
+
+    // === CEKLIST PENCEGAHAN SEKUNDER ===
+    const SEKUNDER_QUESTIONS = [
+      { q: "1. Pernah menderita stroke atau TIA?", rec: "Risiko berulang tinggi. Lakukan strategi pencegahan komprehensif." },
+      { q: "2. Perlu menjalani tindakan diagnostik etiologi stroke?", rec: "Dianjurkan evaluasi lanjutan (dalam 48 jam) untuk merencanakan prevensi optimal." },
+      { q: "3. Apakah tekanan darah > 130/80 mmHg?", rec: "Pengobatan Hipertensi sangat penting. Target TD < 130/80 mmHg untuk prevensi sekunder." },
+      { q: "4. Apakah pernah diskrining Diabetes Melitus?", rec: "DM memicu stroke berulang. Skrining rutin & Target HbA1c ≤ 7% sangat dianjurkan." },
+      { q: "5. Apakah kadar Kolesterol LDL tinggi?", rec: "Target LDL < 70 mg/dL (atau < 100 untuk PJK). Jika tinggi, inisiasi Atorvastatin 20-80 mg harian." },
+      { q: "6. Apakah gaya hidup kurang aktivitas fisik?", rec: "Lakukan aktivitas aerobik sedang 150 menit/minggu atau aktivitas berat 75 menit/minggu." },
+      { q: "7. Apakah pasien merokok (tembakau/vape)?", rec: "Risiko naik 2x lipat. Wajib konseling UBM (Upaya Berhenti Merokok)." },
+      { q: "8. Apakah perlu dianjurkan mengubah pola makan?", rec: "Fokus pada diet rendah natrium, batasi daging merah & gula, perbanyak buah/sayur/biji-bijian." },
+      { q: "9. Konsumsi alkohol dalam jumlah banyak?", rec: "Wajib menghilangkan atau mengurangi konsumsi alkohol." },
+      { q: "10. Pernah didiagnosis Fibrilasi Atrium (AF)?", rec: "AF meningkatkan risiko stroke 4-5x. Direkomendasikan terapi Antikoagulan Oral." },
+      { q: "11. Apakah indikasi Antiplatelet (Aspirin/Clopidogrel)?", rec: "Untuk stroke iskemik nonkardioembolik/TIA, Antiplatelet (bukan antikoagulan) diindikasikan." },
+      { q: "12. Apakah ada riwayat Sleep Apnea Syndrome?", rec: "Mempengaruhi risiko stroke hingga 40%. Rujuk untuk perawatan CPAP." }
+    ];
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const sekContainer = document.getElementById('sekunder-questions');
+      if (sekContainer) {
+        SEKUNDER_QUESTIONS.forEach((item, i) => {
+          sekContainer.innerHTML += `
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 rounded-lg border text-sm gap-2">
+              <span class="font-medium text-slate-800 w-full sm:w-2/3">${item.q}</span>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="sekq_${i}" value="ya" class="w-4 h-4 text-teal-600"> <span class="text-xs font-semibold text-red-600">Ya</span></label>
+                <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="sekq_${i}" value="tidak" checked class="w-4 h-4 text-teal-600"> <span class="text-xs font-semibold text-emerald-600">Tidak</span></label>
+              </div>
+            </div>
+          `;
+        });
+      }
+    });
+
+    function hitungSekunder() {
+      let notes = [];
+      SEKUNDER_QUESTIONS.forEach((item, i) => {
+        const selected = document.querySelector(`input[name="sekq_${i}"]:checked`);
+        if (selected && selected.value === 'ya') {
+          notes.push(`- <b>${item.q.replace(/^[0-9]+\.\s/g, '')}</b>: ${item.rec}`);
+        }
+      });
+      
+      let htmlRes = `<h3 class="font-bold text-lg mb-2 text-slate-800">Rencana Tindak Lanjut Prevensi Sekunder:</h3>`;
+      if (notes.length > 0) {
+        htmlRes += `<div class="text-sm space-y-2 text-slate-700">${notes.join('<br>')}</div>`;
+        lastReportText = `*Ceklist Prevensi Sekunder:* Teridentifikasi ${notes.length} faktor risiko. Lakukan RTL sesuai pedoman.`;
+      } else {
+        htmlRes += `<p class="text-sm text-emerald-700 font-semibold">✅ Tidak ada faktor risiko sekunder tambahan yang teridentifikasi saat ini. Pertahankan terapi dan kontrol rutin.</p>`;
+        lastReportText = `*Ceklist Prevensi Sekunder:* Stabil, tidak ada keluhan baru.`;
+      }
+      
+      htmlRes += getActionButtonsHTML();
+      
+      lastPayload = {
+        instrumen: "Ceklist Pencegahan Sekunder",
+        parameter: `Terdapat ${notes.length} Faktor`,
+        skor: "-",
+        kategori: notes.length > 0 ? "RTL Dibutuhkan" : "Stabil",
+        rekomendasi: "Tercetak di PDF/WA"
+      };
+
+      const res = document.getElementById('sekunder-result');
+      res.innerHTML = htmlRes;
+      res.classList.remove('hidden');
+    }
+    
 </script>
 </body>
 </html>
