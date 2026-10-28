@@ -119,10 +119,18 @@
   <!-- HEADER -->
   <header class="bg-teal-700 text-white shadow-md print:bg-white print:text-slate-900 print:border-b-2 print:border-slate-800 print:shadow-none">
     <div class="max-w-5xl mx-auto px-4 py-5 flex flex-col md:flex-row justify-between items-center gap-3">
-      <div>
-        <span class="bg-teal-900 text-teal-100 text-xs font-semibold px-2.5 py-1 rounded uppercase tracking-wider no-print">Layanan Primer / FKTP</span>
-        <h1 class="text-2xl md:text-3xl font-bold mt-1">DETEKSI STROKE</h1>
-        <p class="text-teal-100 print:text-slate-600 text-sm">Sistem Skoring Prediksi Risiko, Skrining Kognitif & Triase Stroke Terpadu</p>
+      <div class="flex items-center gap-4">
+        <!-- Logo Puskesmas (SVG Kemenkes/Bakti Husada style or generic cross) -->
+        <div class="bg-white p-2 rounded-full hidden sm:block shadow-sm">
+          <svg class="w-12 h-12 text-teal-700" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="bg-teal-900 text-teal-100 text-xs font-semibold px-2.5 py-1 rounded uppercase tracking-wider no-print">UPTD PUSKESMAS SUMBER</span>
+          <h1 class="text-2xl md:text-3xl font-bold mt-1">DETEKSI STROKE</h1>
+          <p class="text-teal-100 print:text-slate-600 text-sm">Aplikasi Skrining Terpadu & Evaluasi Klinis Pasien</p>
+        </div>
       </div>
       <div class="text-xs bg-teal-800/70 print:bg-transparent p-3 rounded-lg border border-teal-600 print:border-none text-right">
         <p class="font-semibold">Acuan Pedoman Klinis:</p>
@@ -148,8 +156,27 @@
           <input type="text" id="pt-rm" placeholder="Contoh: RM-00124 / 58 Thn" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm">
         </div>
         <div>
-          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Nama FKTP / Puskesmas</label>
-          <input type="text" id="pt-fktp" placeholder="Contoh: Puskesmas Ungaran" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm">
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Asal Desa</label>
+          <select id="pt-fktp" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm bg-white">
+            <option value="Sumber">Sumber</option>
+            <option value="Jatihadi">Jatihadi</option>
+            <option value="Polbayem">Polbayem</option>
+            <option value="Sekarsari">Sekarsari</option>
+            <option value="Kedungasem">Kedungasem</option>
+            <option value="Megulung">Megulung</option>
+            <option value="Jadi">Jadi</option>
+            <option value="Bogorejo">Bogorejo</option>
+            <option value="Grawan">Grawan</option>
+            <option value="Randuagung">Randuagung</option>
+            <option value="Tlogotunggal">Tlogotunggal</option>
+            <option value="Sukorejo">Sukorejo</option>
+            <option value="Kedungtulup">Kedungtulup</option>
+            <option value="Krikilan">Krikilan</option>
+            <option value="Ronggomulyo">Ronggomulyo</option>
+            <option value="Logung">Logung</option>
+            <option value="Logede">Logede</option>
+            <option value="Pelemsari">Pelemsari</option>
+          </select>
         </div>
         <div>
           <label class="block text-[11px] font-semibold text-slate-500 mb-1">Pemeriksa</label>
@@ -495,7 +522,7 @@
   </main>
 
   <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-8">
-    <p>Aplikasi <b>Deteksi Stroke FKTP</b> • Dikembangkan untuk Pelatihan Teknis Penanggulangan Stroke bagi Dokter dan Perawat</p>
+    <p>Aplikasi <b>Deteksi Stroke</b> • Dikembangkan oleh <b>Puskesmas Sumber</b> untuk Pelatihan Teknis Penanggulangan Stroke</p>
   </footer>
 
   <!-- JAVASCRIPT LOGIC -->
@@ -514,7 +541,7 @@
       const doc = document.getElementById('pt-doc').value || '-';
       return `*LAPORAN SKRINING DETEKSI STROKE FKTP*
 📅 Tanggal: ${todayStr}
-🏥 FKTP: ${fktp}
+🏡 Asal Desa: ${fktp}
 👤 Nama Pasien: ${name}
 🆔 No. RM/Usia: ${rm}
 👨‍⚕️ Pemeriksa: ${doc}
