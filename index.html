@@ -14,9 +14,9 @@
       const hba1c = hba1cStr ? parseFloat(hba1cStr) : null;
 
       // Tentukan target berdasarkan pedoman Kemenkes
-      const targetSbp = status === 'high' ? 130 : 140;
-      const targetDbp = status === 'high' ? 80 : 90;
-      const targetLdl = status === 'high' ? 70 : 100;
+      const targetSbp = (status === 'high' || status === 'mod') ? 130 : 140;
+      const targetDbp = (status === 'high' || status === 'mod') ? 80 : 90;
+      const targetLdl = status === 'high' ? 70 : (status === 'mod' ? 100 : 130);
       const targetHba1c = 7.0;
 
       let reportLines = [];
@@ -71,7 +71,7 @@
       // Siapkan payload untuk WA dan Spreadsheet
       lastReportText = `*Evaluasi Target Terapi Klinis*
 ` +
-                       `*Status:* ${status === 'high' ? 'Risiko Sangat Tinggi / Pasca-Stroke' : 'Risiko Rendah-Sedang'}
+                       `*Status:* ${status === 'high' ? 'Risiko Sangat Tinggi (Stroke)' : (status === 'mod' ? 'Risiko Tinggi (PJK)' : 'Risiko Primer')}
 ` +
                        `*Hasil Evaluasi:*
 - ` + reportLines.join('\n- ') + `
@@ -80,7 +80,7 @@
       
       lastPayload = {
         instrumen: "Evaluasi Target Terapi Klinis",
-        parameter: `Status: ${status === 'high' ? 'High Risk' : 'Low/Mod Risk'}`,
+        parameter: `Status: ${status === 'high' ? 'Sangat Tinggi' : (status === 'mod' ? 'Tinggi (PJK)' : 'Primer')}`,
         skor: reportLines.join(' | '),
         kategori: allOk ? "TERCAPAI" : "BELUM TERCAPAI",
         rekomendasi: kesimpulanTxt
@@ -483,7 +483,7 @@
                 <li><b>TD:</b> < 140/90 mmHg (atau < 130/80 untuk risiko tinggi)</li>
                 <li><b>Gula Darah:</b> GDP 80-130, GDS/GD2PP < 180, HbA1c < 7%</li>
                 <li><b>IMT:</b> 18.5 - 25.0 kg/m² (Standar Asia)</li>
-                <li><b>Profil Lipid:</b> Kolesterol Total < 200, LDL < 70-100, HDL > 40/50, TG < 150 mg/dL</li>
+                <li><b>Profil Lipid:</b> Kolesterol Total < 200 (Standar AHA/ASA: < 160), LDL < 70/100/130 (sesuai risiko), HDL > 40/50, TG < 150 mg/dL</li>
               </ul>
             </div>
           </div>
@@ -500,15 +500,14 @@
         <h2 class="text-xl font-bold text-slate-800 mt-2">Kalkulator Evaluasi Pencapaian Target Terapi</h2>
         <p class="text-xs text-slate-500 mb-6">Gunakan form ini untuk memantau apakah pasien (terutama prevensi sekunder pasca-stroke/TIA) sudah mencapai target tekanan darah, LDL, dan HbA1c.</p>
 
-        <div class="bg-amber-100 text-amber-800 text-xs p-3 rounded-lg mb-4 border border-amber-200">
-          <b>💡 Keterangan Lingkar Perut (Obesitas Sentral):</b> Bila pasien memiliki Lingkar Perut melebihi batas normal (Laki-laki > 90 cm, Perempuan > 80 cm), pertimbangkan untuk mengarahkan penilaian menggunakan <b>Carta Prediksi Non-Laboratorium (Berbasis IMT)</b> apabila profil lipid lengkap tidak tersedia.
-        </div>
+        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="md:col-span-2">
             <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Status Pasien & Risiko</label>
             <select id="target-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-amber-50">
-              <option value="high">Penyintas Stroke / TIA / Riwayat PJK (Risiko Sangat Tinggi)</option>
-              <option value="low">Pencegahan Primer / Risiko Rendah-Sedang (Tanpa PJK)</option>
+              <option value="low">Pencegahan Primer / Tanpa Riwayat PJK (Target LDL < 130)</option>
+              <option value="mod">Memiliki Riwayat PJK / DM Terkontrol (Target LDL < 100)</option>
+              <option value="high">Penyintas Stroke / Risiko Sangat Tinggi (Target LDL < 70)</option>
             </select>
           </div>
 
@@ -957,9 +956,9 @@
       const hba1c = hba1cStr ? parseFloat(hba1cStr) : null;
 
       // Tentukan target berdasarkan pedoman Kemenkes
-      const targetSbp = status === 'high' ? 130 : 140;
-      const targetDbp = status === 'high' ? 80 : 90;
-      const targetLdl = status === 'high' ? 70 : 100;
+      const targetSbp = (status === 'high' || status === 'mod') ? 130 : 140;
+      const targetDbp = (status === 'high' || status === 'mod') ? 80 : 90;
+      const targetLdl = status === 'high' ? 70 : (status === 'mod' ? 100 : 130);
       const targetHba1c = 7.0;
 
       let reportLines = [];
@@ -1014,7 +1013,7 @@
       // Siapkan payload untuk WA dan Spreadsheet
       lastReportText = `*Evaluasi Target Terapi Klinis*
 ` +
-                       `*Status:* ${status === 'high' ? 'Risiko Sangat Tinggi / Pasca-Stroke' : 'Risiko Rendah-Sedang'}
+                       `*Status:* ${status === 'high' ? 'Risiko Sangat Tinggi (Stroke)' : (status === 'mod' ? 'Risiko Tinggi (PJK)' : 'Risiko Primer')}
 ` +
                        `*Hasil Evaluasi:*
 - ` + reportLines.join('\n- ') + `
@@ -1023,7 +1022,7 @@
       
       lastPayload = {
         instrumen: "Evaluasi Target Terapi Klinis",
-        parameter: `Status: ${status === 'high' ? 'High Risk' : 'Low/Mod Risk'}`,
+        parameter: `Status: ${status === 'high' ? 'Sangat Tinggi' : (status === 'mod' ? 'Tinggi (PJK)' : 'Primer')}`,
         skor: reportLines.join(' | '),
         kategori: allOk ? "TERCAPAI" : "BELUM TERCAPAI",
         rekomendasi: kesimpulanTxt
