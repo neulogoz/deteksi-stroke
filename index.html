@@ -4,327 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deteksi Stroke - Instrumen Skrining & Tatalaksana FKTP</title>
-  <script src="https://cdn.tailwindcss.com">
-    function hitungTargetTerapi() {
-      const status = document.getElementById('target-status').value;
-      const sbp = parseFloat(document.getElementById('target-sbp').value) || 0;
-      const dbp = parseFloat(document.getElementById('target-dbp').value) || 0;
-      const ldl = parseFloat(document.getElementById('target-ldl').value) || 0;
-      const hba1cStr = document.getElementById('target-hba1c').value;
-      const hba1c = hba1cStr ? parseFloat(hba1cStr) : null;
-
-      // Tentukan target berdasarkan pedoman Kemenkes
-      const targetSbp = (status === 'high' || status === 'mod') ? 130 : 140;
-      const targetDbp = (status === 'high' || status === 'mod') ? 80 : 90;
-      const targetLdl = status === 'high' ? 70 : (status === 'mod' ? 100 : 130);
-      const targetHba1c = 7.0;
-
-      let reportLines = [];
-      let allOk = true;
-
-      // Evaluasi Tekanan Darah
-      let bpHtml = '';
-      if (sbp > 0 && dbp > 0) {
-        if (sbp < targetSbp && dbp < targetDbp) {
-          bpHtml = `✅ <b>Tekanan Darah (${sbp}/${dbp} mmHg):</b> TERCAPAI (Target < ${targetSbp}/${targetDbp})`;
-          reportLines.push(`TD ${sbp}/${dbp} (Tercapai)`);
-        } else {
-          bpHtml = `⚠️ <b>Tekanan Darah (${sbp}/${dbp} mmHg):</b> BELUM TERCAPAI (Target < ${targetSbp}/${targetDbp}). <i>Evaluasi kepatuhan obat / Intensifikasi Amlodipine + Lisinopril/HCT.</i>`;
-          reportLines.push(`TD ${sbp}/${dbp} (Belum Tercapai, target <${targetSbp}/${targetDbp})`);
-          allOk = false;
-        }
-      } else {
-         bpHtml = `<i>Tekanan Darah tidak diisi.</i>`;
-      }
-
-      // Evaluasi LDL
-      let ldlHtml = '';
-      if (ldl > 0) {
-        if (ldl < targetLdl) {
-          ldlHtml = `✅ <b>Kolesterol LDL (${ldl} mg/dL):</b> TERCAPAI (Target < ${targetLdl} mg/dL)`;
-          reportLines.push(`LDL ${ldl} (Tercapai)`);
-        } else {
-          ldlHtml = `⚠️ <b>Kolesterol LDL (${ldl} mg/dL):</b> BELUM TERCAPAI (Target < ${targetLdl} mg/dL). <i>Pertimbangkan inisiasi/titrasi Statin (Atorvastatin 20-80 mg).</i>`;
-          reportLines.push(`LDL ${ldl} (Belum Tercapai, target <${targetLdl})`);
-          allOk = false;
-        }
-      } else {
-        ldlHtml = `<i>Kolesterol LDL tidak diisi.</i>`;
-      }
-
-      // Evaluasi HbA1c (Jika ada)
-      let hba1cHtml = '';
-      if (hba1c !== null) {
-        if (hba1c <= targetHba1c) {
-          hba1cHtml = `✅ <b>HbA1c (${hba1c}%):</b> TERCAPAI (Target ≤ 7.0%)`;
-          reportLines.push(`HbA1c ${hba1c}% (Tercapai)`);
-        } else {
-          hba1cHtml = `⚠️ <b>HbA1c (${hba1c}%):</b> BELUM TERCAPAI (Target ≤ 7.0%). <i>Modifikasi diet / intensifikasi Metformin / Sulfonilurea.</i>`;
-          reportLines.push(`HbA1c ${hba1c}% (Belum Tercapai, target <=7.0%)`);
-          allOk = false;
-        }
-      }
-
-      let kesimpulanTxt = allOk ? "Semua parameter yang diisi telah MENCAPAI TARGET optimal." : "Masih terdapat parameter yang BELUM MENCAPAI TARGET. Perlu penyesuaian dosis obat (Stepped-Care) & Kepatuhan Gaya Hidup.";
-      let colorBox = allOk ? "bg-emerald-50 border-emerald-500" : "bg-amber-50 border-amber-500";
-
-      // Siapkan payload untuk WA dan Spreadsheet
-      lastReportText = `*Evaluasi Target Terapi Klinis*
-` +
-                       `*Status:* ${status === 'high' ? 'Risiko Sangat Tinggi (Stroke)' : (status === 'mod' ? 'Risiko Tinggi (PJK)' : 'Risiko Primer')}
-` +
-                       `*Hasil Evaluasi:*
-- ` + reportLines.join('\n- ') + `
-` +
-                       `*Kesimpulan:* ${kesimpulanTxt}`;
-      
-      lastPayload = {
-        instrumen: "Evaluasi Target Terapi Klinis",
-        parameter: `Status: ${status === 'high' ? 'Sangat Tinggi' : (status === 'mod' ? 'Tinggi (PJK)' : 'Primer')}`,
-        skor: reportLines.join(' | '),
-        kategori: allOk ? "TERCAPAI" : "BELUM TERCAPAI",
-        rekomendasi: kesimpulanTxt
-      };
-
-      const res = document.getElementById('target-result');
-      res.className = `mt-6 p-5 rounded-xl border-2 ${colorBox}`;
-      res.innerHTML = `
-        <h3 class="font-bold text-lg mb-4 text-slate-800 border-b pb-2">Kesimpulan Evaluasi Klinis</h3>
-        <div class="space-y-3 text-sm text-slate-700">
-          <p>${bpHtml}</p>
-          <p>${ldlHtml}</p>
-          ${hba1cHtml ? `<p>${hba1cHtml}</p>` : ''}
-        </div>
-        <div class="mt-4 p-3 bg-white rounded-lg border text-xs font-semibold text-slate-800 shadow-sm">
-          💡 ${kesimpulanTxt}
-        </div>
-        ${getActionButtonsHTML()}
-      `;
-      res.classList.remove('hidden');
-    }
-
-    
-    // === SKRINING MASSAL CSV (AUTO-SWITCH LAB/NON-LAB) ===
-    let massalData = [];
-
-    function prosesCSV() {
-      const file = document.getElementById('file-csv').files[0];
-      if (!file) {
-        alert("Pilih file CSV rekapan Prolanis terlebih dahulu!");
-        return;
-      }
-
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          massalData = results.data;
-          
-          massalData.forEach(row => {
-            // Helper function to find columns case-insensitively
-            const keys = Object.keys(row);
-            const getVal = (possibleNames) => {
-              for (let k of keys) {
-                if (possibleNames.includes(k.toLowerCase().trim())) return row[k].trim();
-              }
-              return "";
-            };
-
-            const usia = parseInt(getVal(["usia", "umur", "age"])) || 0;
-            const lp = getVal(["l/p", "jenis kelamin", "jk", "sex", "gender", "kelamin"]).toLowerCase();
-            const sex = (lp.startsWith('p') || lp === 'wanita' || lp === 'w') ? 'women' : 'men';
-            const perokok = getVal(["perokok", "merokok", "smoke"]).toLowerCase();
-            const smoke = (perokok === 'ya' || perokok === 'y' || perokok === 'aktif') ? 'smoker' : 'nonsmoker';
-            const sbp = parseFloat(getVal(["sistolik", "td", "sbp", "tensi"])) || 120;
-            const dmVal = getVal(["dm", "diabetes"]).toLowerCase();
-            const dm = (dmVal === 'ya' || dmVal === 'y') ? 'dm' : 'nodm';
-            
-            const cholStr = getVal(["kolesterol", "chol", "kol", "kolesterol total"]);
-            const chol = parseFloat(cholStr);
-            
-            const bb = parseFloat(getVal(["bb", "berat", "berat badan", "weight"])) || 0;
-            const tb = parseFloat(getVal(["tb", "tinggi", "tinggi badan", "height"])) || 0;
-
-            // Hitung Index Usia WHO
-            let ageIdx = 0;
-            if (usia >= 70) ageIdx = 6;
-            else if (usia >= 65) ageIdx = 5;
-            else if (usia >= 60) ageIdx = 4;
-            else if (usia >= 55) ageIdx = 3;
-            else if (usia >= 50) ageIdx = 2;
-            else if (usia >= 45) ageIdx = 1;
-
-            const sbpIdx = getSbpIdx(sbp);
-            
-            let score = 0;
-            let metode = "";
-
-            try {
-              // LOGIKA AUTO-SWITCH
-              if (!isNaN(chol) && chol > 0) {
-                // Jika data kolesterol ada angkanya -> Pakai Carta Lab
-                metode = "Lab";
-                const cholMmol = (chol / 38.67).toFixed(2);
-                const cIdx = getCholIdx(cholMmol);
-                score = WHO_DATA.lab[dm][sex][smoke][ageIdx][sbpIdx][cIdx];
-              } else {
-                // Jika data kolesterol kosong/strip -> Pakai Carta Non-Lab (IMT)
-                metode = "Non-Lab (IMT)";
-                let bmi = 22; // default nilai normal (jika BB/TB kosong) agar sistem tidak error
-                if (bb > 0 && tb > 0) {
-                   bmi = bb / Math.pow(tb / 100, 2);
-                }
-                const bIdx = getBmiIdx(bmi);
-                score = WHO_DATA.nonlab[sex][smoke][ageIdx][sbpIdx][bIdx];
-              }
-            } catch(e) {
-              score = 0;
-            }
-
-            // Kategori dan Tatalaksana
-            let katText = '', tata = '';
-            if (score < 5) { katText = 'Rendah (<5%)'; tata = 'Edukasi UBM & pola hidup sehat. Kontrol 1 Tahun.'; }
-            else if (score < 10) { katText = 'Sedang (5-<10%)'; tata = 'Konseling gaya hidup & pertimbangkan obat HT/DM. Kontrol 3-6 Bulan.'; }
-            else if (score < 20) { katText = 'Sedang-Tinggi (10-<20%)'; tata = 'Intervensi gaya hidup & terapi obat HT/DM. Kontrol 3 Bulan.'; }
-            else if (score < 30) { katText = 'Tinggi (20-<30%)'; tata = 'Wajib skrining MoCA-Ina & EKG, obat HT/DM/Statin. Kontrol 3 Bulan.'; }
-            else { katText = 'Sangat Tinggi (≥30%)'; tata = 'Wajib skrining MoCA-Ina & EKG, tatalaksana agresif. Rujuk bila perlu.'; }
-
-            // Sisipkan hasil ke baris data
-            row['Metode Skrining'] = metode;
-            row['Skor Risiko WHO'] = score + '%';
-            row['Kategori'] = katText;
-            row['Tatalaksana & Follow-up'] = tata;
-          });
-
-          renderTable();
-        }
-      });
-    }
-
-    function renderTable() {
-      if (massalData.length === 0) return;
-      
-      const head = document.getElementById('table-head');
-      const body = document.getElementById('table-body');
-      head.innerHTML = '';
-      body.innerHTML = '';
-
-      const keys = Object.keys(massalData[0]);
-      keys.forEach(k => {
-        head.innerHTML += `<th class="px-3 py-3">${k}</th>`;
-      });
-
-      // Tampilkan preview max 10 baris
-      const previewData = massalData.slice(0, 10);
-      previewData.forEach(row => {
-        let tr = '<tr class="hover:bg-slate-50">';
-        keys.forEach(k => {
-          let badgeClass = '';
-          if (k === 'Skor Risiko WHO') {
-            const val = parseInt(row[k]);
-            if (val >= 20) badgeClass = 'text-red-700 font-bold bg-red-100 rounded px-2 py-1 inline-block';
-            else if (val >= 10) badgeClass = 'text-amber-700 font-bold bg-amber-100 rounded px-2 py-1 inline-block';
-            else badgeClass = 'text-emerald-700 font-bold bg-emerald-100 rounded px-2 py-1 inline-block';
-            tr += `<td class="px-3 py-2"><span class="${badgeClass}">${row[k]}</span></td>`;
-          } else if (k === 'Metode Skrining') {
-             const mClass = row[k] === 'Lab' ? 'text-blue-700 font-semibold' : 'text-purple-700 font-semibold';
-             tr += `<td class="px-3 py-2 ${mClass}">${row[k]}</td>`;
-          } else {
-            tr += `<td class="px-3 py-2 whitespace-nowrap">${row[k]}</td>`;
-          }
-        });
-        tr += '</tr>';
-        body.innerHTML += tr;
-      });
-
-      if (massalData.length > 10) {
-        body.innerHTML += `<tr><td colspan="${keys.length}" class="px-3 py-3 text-center text-slate-500 font-medium bg-slate-50">... Menampilkan 10 dari total ${massalData.length} baris data pasien ...</td></tr>`;
-      }
-
-      document.getElementById('massal-result').classList.remove('hidden');
-    }
-
-    function downloadCSV() {
-      if (massalData.length === 0) return;
-      const csv = Papa.unparse(massalData);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", "Laporan_Skrining_Massal_Prolanis.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    // === CEKLIST PENCEGAHAN SEKUNDER ===
-    const SEKUNDER_QUESTIONS = [
-      { q: "1. Pernah menderita stroke atau TIA?", rec: "Risiko berulang tinggi. Lakukan strategi pencegahan komprehensif." },
-      { q: "2. Perlu menjalani tindakan diagnostik etiologi stroke?", rec: "Dianjurkan evaluasi lanjutan (dalam 48 jam) untuk merencanakan prevensi optimal." },
-      { q: "3. Apakah tekanan darah > 130/80 mmHg?", rec: "Pengobatan Hipertensi sangat penting. Target TD < 130/80 mmHg untuk prevensi sekunder." },
-      { q: "4. Apakah pernah diskrining Diabetes Melitus?", rec: "DM memicu stroke berulang. Skrining rutin & Target HbA1c ≤ 7% sangat dianjurkan." },
-      { q: "5. Apakah kadar Kolesterol LDL tinggi?", rec: "Target LDL < 70 mg/dL (atau < 100 untuk PJK). Jika tinggi, inisiasi Atorvastatin 20-80 mg harian." },
-      { q: "6. Apakah gaya hidup kurang aktivitas fisik?", rec: "Lakukan aktivitas aerobik sedang 150 menit/minggu atau aktivitas berat 75 menit/minggu." },
-      { q: "7. Apakah pasien merokok (tembakau/vape)?", rec: "Risiko naik 2x lipat. Wajib konseling UBM (Upaya Berhenti Merokok)." },
-      { q: "8. Apakah perlu dianjurkan mengubah pola makan?", rec: "Fokus pada diet rendah natrium, batasi daging merah & gula, perbanyak buah/sayur/biji-bijian." },
-      { q: "9. Konsumsi alkohol dalam jumlah banyak?", rec: "Wajib menghilangkan atau mengurangi konsumsi alkohol." },
-      { q: "10. Pernah didiagnosis Fibrilasi Atrium (AF)?", rec: "AF meningkatkan risiko stroke 4-5x. Direkomendasikan terapi Antikoagulan Oral." },
-      { q: "11. Apakah indikasi Antiplatelet (Aspirin/Clopidogrel)?", rec: "Untuk stroke iskemik nonkardioembolik/TIA, Antiplatelet (bukan antikoagulan) diindikasikan." },
-      { q: "12. Apakah ada riwayat Sleep Apnea Syndrome?", rec: "Mempengaruhi risiko stroke hingga 40%. Rujuk untuk perawatan CPAP." }
-    ];
-
-    document.addEventListener("DOMContentLoaded", function() {
-      const sekContainer = document.getElementById('sekunder-questions');
-      if (sekContainer) {
-        SEKUNDER_QUESTIONS.forEach((item, i) => {
-          sekContainer.innerHTML += `
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 rounded-lg border text-sm gap-2">
-              <span class="font-medium text-slate-800 w-full sm:w-2/3">${item.q}</span>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="sekq_${i}" value="ya" class="w-4 h-4 text-teal-600"> <span class="text-xs font-semibold text-red-600">Ya</span></label>
-                <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="sekq_${i}" value="tidak" checked class="w-4 h-4 text-teal-600"> <span class="text-xs font-semibold text-emerald-600">Tidak</span></label>
-              </div>
-            </div>
-          `;
-        });
-      }
-    });
-
-    function hitungSekunder() {
-      let notes = [];
-      SEKUNDER_QUESTIONS.forEach((item, i) => {
-        const selected = document.querySelector(`input[name="sekq_${i}"]:checked`);
-        if (selected && selected.value === 'ya') {
-          notes.push(`- <b>${item.q.replace(/^[0-9]+\.\s/g, '')}</b>: ${item.rec}`);
-        }
-      });
-      
-      let htmlRes = `<h3 class="font-bold text-lg mb-2 text-slate-800">Rencana Tindak Lanjut Prevensi Sekunder:</h3>`;
-      if (notes.length > 0) {
-        htmlRes += `<div class="text-sm space-y-2 text-slate-700">${notes.join('<br>')}</div>`;
-        lastReportText = `*Ceklist Prevensi Sekunder:* Teridentifikasi ${notes.length} faktor risiko. Lakukan RTL sesuai pedoman.`;
-      } else {
-        htmlRes += `<p class="text-sm text-emerald-700 font-semibold">✅ Tidak ada faktor risiko sekunder tambahan yang teridentifikasi saat ini. Pertahankan terapi dan kontrol rutin.</p>`;
-        lastReportText = `*Ceklist Prevensi Sekunder:* Stabil, tidak ada keluhan baru.`;
-      }
-      
-      htmlRes += getActionButtonsHTML();
-      
-      lastPayload = {
-        instrumen: "Ceklist Pencegahan Sekunder",
-        parameter: `Terdapat ${notes.length} Faktor`,
-        skor: "-",
-        kategori: notes.length > 0 ? "RTL Dibutuhkan" : "Stabil",
-        rekomendasi: "Tercetak di PDF/WA"
-      };
-
-      const res = document.getElementById('sekunder-result');
-      res.innerHTML = htmlRes;
-      res.classList.remove('hidden');
-    }
-    
-</script>
+  
+  <!-- PEMANGGIL TAILWIND CSS YANG SUDAH DIPERBAIKI -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
     body { font-family: 'Inter', sans-serif; }
     .tab-active { border-bottom: 3px solid #0d9488; color: #0f766e; font-weight: 700; background-color: #f0fdfa; }
@@ -334,7 +19,6 @@
       .print-box { border: 1px solid #cbd5e1 !important; box-shadow: none !important; }
     }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
@@ -342,7 +26,6 @@
   <header class="bg-teal-700 text-white shadow-md print:bg-white print:text-slate-900 print:border-b-2 print:border-slate-800 print:shadow-none">
     <div class="max-w-5xl mx-auto px-4 py-5 flex flex-col md:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-4">
-        <!-- Logo Puskesmas (SVG Kemenkes/Bakti Husada style or generic cross) -->
         <div class="bg-white p-2 rounded-full hidden sm:block shadow-sm">
           <svg class="w-12 h-12 text-teal-700" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
@@ -598,7 +281,6 @@
         <h2 class="text-lg font-bold text-slate-800">Montreal Cognitive Assessment Versi Indonesia (MoCA-Ina)</h2>
         <p class="text-xs text-slate-500 mb-4">Skrining Tahap 2 pada pasien Risiko Tinggi (>20%) untuk deteksi dini gangguan kognitif / CSVD</p>
 
-        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">1. Visuospasial / Eksekutif (Maks 5 Poin)</label>
@@ -715,8 +397,6 @@
       </div>
     </section>
 
-
-    
     <!-- ================= TAB 6: TARGET TERAPI & KLINIS (INTERAKTIF) ================= -->
     <section id="sec-target" class="tab-content hidden space-y-6">
       <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-box">
@@ -724,7 +404,6 @@
         <h2 class="text-xl font-bold text-slate-800 mt-2">Kalkulator Evaluasi Pencapaian Target Terapi</h2>
         <p class="text-xs text-slate-500 mb-6">Gunakan form ini untuk memantau apakah pasien (terutama prevensi sekunder pasca-stroke/TIA) sudah mencapai target tekanan darah, LDL, dan HbA1c.</p>
 
-        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="md:col-span-2">
             <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Status Pasien & Risiko</label>
@@ -760,8 +439,6 @@
       </div>
     </section>
 
-
-
     <!-- ================= TAB 7: CEKLIST PENCEGAHAN SEKUNDER ================= -->
     <section id="sec-sekunder" class="tab-content hidden space-y-6">
       <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-box">
@@ -769,7 +446,7 @@
         <p class="text-xs text-slate-500 mb-6">Penilaian kondisi klinis untuk penyintas stroke/TIA agar modifikasi gaya hidup & terapi lebih terarah.</p>
 
         <div class="space-y-3" id="sekunder-questions">
-          <!-- Will be filled by JS -->
+          <!-- Akan diisi otomatis oleh JavaScript -->
         </div>
 
         <button onclick="hitungSekunder()" class="mt-5 w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg shadow transition no-print">Cetak & Evaluasi Rencana Tindak Lanjut</button>
@@ -777,7 +454,6 @@
         <div id="sekunder-result" class="hidden mt-6 p-5 rounded-xl border-2 bg-slate-50 border-teal-500"></div>
       </div>
     </section>
-
 
     <!-- ================= TAB 8: SKRINING MASSAL PROLANIS ================= -->
     <section id="sec-massal" class="tab-content hidden space-y-6">
@@ -827,9 +503,13 @@
     <p>Aplikasi <b>Deteksi Stroke</b> • Dikembangkan oleh <b>Puskesmas Sumber</b> untuk Pelatihan Teknis Penanggulangan Stroke</p>
   </footer>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- ============================================== -->
+  <!-- BAGIAN JAVASCRIPT & LOGIKA UTAMA APLIKASI      -->
+  <!-- ============================================== -->
   <script>
+    // URL Web App Terbaru sudah terpasang di sini
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6EMaMsZgEIp1myK5j-aGM38z-V_-sap_-XiGTMnRY7ZatyQ6QywLVBGT1lXCzvvAe/exec";
+    
     let lastReportText = "";
     let lastPayload = {};
 
@@ -841,14 +521,7 @@
       const rm = document.getElementById('pt-rm').value || '-';
       const fktp = document.getElementById('pt-fktp').value || '-';
       const doc = document.getElementById('pt-doc').value || '-';
-      return `*LAPORAN SKRINING DETEKSI STROKE FKTP*
-📅 Tanggal: ${todayStr}
-🏡 Asal Desa: ${fktp}
-👤 Nama Pasien: ${name}
-🆔 No. RM/Usia: ${rm}
-👨‍⚕️ Pemeriksa: ${doc}
------------------------------------
-`;
+      return `*LAPORAN SKRINING DETEKSI STROKE FKTP*\n📅 Tanggal: ${todayStr}\n🏡 Asal Desa: ${fktp}\n👤 Nama Pasien: ${name}\n🆔 No. RM/Usia: ${rm}\n👨‍⚕️ Pemeriksa: ${doc}\n-----------------------------------\n`;
     }
 
     function getActionButtonsHTML() {
@@ -873,15 +546,11 @@
 
     async function simpanKeSpreadsheet(btnElement) {
       const pin = document.getElementById('pt-pin').value;
-      if (pin !== "1234") { // PIN Default Puskesmas
+      if (pin !== "1234") { 
         alert("PIN Akses Database salah atau kosong! Masukkan PIN yang benar (Contoh default: 1234).");
         return;
       }
-      if (GOOGLE_SCRIPT_URL.includes("GANTI_DENGAN_URL_ANDA")) {
-        alert("URL Google Apps Script belum dikonfigurasi di file index.html!");
-        return;
-      }
-
+      
       const payload = {
         fktp: document.getElementById('pt-fktp').value || '-',
         pemeriksa: document.getElementById('pt-doc').value || '-',
@@ -934,7 +603,7 @@
       }
     }
 
-    // Matriks data Carta WHO di-load otomatis
+    // Matriks data Carta WHO 
     const WHO_DATA = {
       lab: {
         nodm: {
@@ -1144,7 +813,6 @@
       resDiv.classList.remove('hidden');
     }
 
-    // Inisialisasi Pertanyaan ASA
     const ASA_QUESTIONS = [
       "Tekanan darah > 120/80 mmHg?", "Riwayat Fibrilasi Atrium?", "Gula darah puasa > 100 mg/dL?",
       "IMT > 25 kg/m²?", "Pola makan tinggi lemak/garam/gula?", "Kolesterol total > 160 mg/dL?",
@@ -1222,7 +890,6 @@
       const hba1cStr = document.getElementById('target-hba1c').value;
       const hba1c = hba1cStr ? parseFloat(hba1cStr) : null;
 
-      // Tentukan target berdasarkan pedoman Kemenkes
       const targetSbp = (status === 'high' || status === 'mod') ? 130 : 140;
       const targetDbp = (status === 'high' || status === 'mod') ? 80 : 90;
       const targetLdl = status === 'high' ? 70 : (status === 'mod' ? 100 : 130);
@@ -1231,7 +898,6 @@
       let reportLines = [];
       let allOk = true;
 
-      // Evaluasi Tekanan Darah
       let bpHtml = '';
       if (sbp > 0 && dbp > 0) {
         if (sbp < targetSbp && dbp < targetDbp) {
@@ -1246,7 +912,6 @@
          bpHtml = `<i>Tekanan Darah tidak diisi.</i>`;
       }
 
-      // Evaluasi LDL
       let ldlHtml = '';
       if (ldl > 0) {
         if (ldl < targetLdl) {
@@ -1261,7 +926,6 @@
         ldlHtml = `<i>Kolesterol LDL tidak diisi.</i>`;
       }
 
-      // Evaluasi HbA1c (Jika ada)
       let hba1cHtml = '';
       if (hba1c !== null) {
         if (hba1c <= targetHba1c) {
@@ -1277,15 +941,7 @@
       let kesimpulanTxt = allOk ? "Semua parameter yang diisi telah MENCAPAI TARGET optimal." : "Masih terdapat parameter yang BELUM MENCAPAI TARGET. Perlu penyesuaian dosis obat (Stepped-Care) & Kepatuhan Gaya Hidup.";
       let colorBox = allOk ? "bg-emerald-50 border-emerald-500" : "bg-amber-50 border-amber-500";
 
-      // Siapkan payload untuk WA dan Spreadsheet
-      lastReportText = `*Evaluasi Target Terapi Klinis*
-` +
-                       `*Status:* ${status === 'high' ? 'Risiko Sangat Tinggi (Stroke)' : (status === 'mod' ? 'Risiko Tinggi (PJK)' : 'Risiko Primer')}
-` +
-                       `*Hasil Evaluasi:*
-- ` + reportLines.join('\n- ') + `
-` +
-                       `*Kesimpulan:* ${kesimpulanTxt}`;
+      lastReportText = `*Evaluasi Target Terapi Klinis*\n*Status:* ${status === 'high' ? 'Risiko Sangat Tinggi (Stroke)' : (status === 'mod' ? 'Risiko Tinggi (PJK)' : 'Risiko Primer')}\n*Hasil Evaluasi:*\n- ` + reportLines.join('\n- ') + `\n*Kesimpulan:* ${kesimpulanTxt}`;
       
       lastPayload = {
         instrumen: "Evaluasi Target Terapi Klinis",
@@ -1330,7 +986,6 @@
           massalData = results.data;
           
           massalData.forEach(row => {
-            // Helper function to find columns case-insensitively
             const keys = Object.keys(row);
             const getVal = (possibleNames) => {
               for (let k of keys) {
@@ -1354,7 +1009,6 @@
             const bb = parseFloat(getVal(["bb", "berat", "berat badan", "weight"])) || 0;
             const tb = parseFloat(getVal(["tb", "tinggi", "tinggi badan", "height"])) || 0;
 
-            // Hitung Index Usia WHO
             let ageIdx = 0;
             if (usia >= 70) ageIdx = 6;
             else if (usia >= 65) ageIdx = 5;
@@ -1369,17 +1023,14 @@
             let metode = "";
 
             try {
-              // LOGIKA AUTO-SWITCH
               if (!isNaN(chol) && chol > 0) {
-                // Jika data kolesterol ada angkanya -> Pakai Carta Lab
                 metode = "Lab";
                 const cholMmol = (chol / 38.67).toFixed(2);
                 const cIdx = getCholIdx(cholMmol);
                 score = WHO_DATA.lab[dm][sex][smoke][ageIdx][sbpIdx][cIdx];
               } else {
-                // Jika data kolesterol kosong/strip -> Pakai Carta Non-Lab (IMT)
                 metode = "Non-Lab (IMT)";
-                let bmi = 22; // default nilai normal (jika BB/TB kosong) agar sistem tidak error
+                let bmi = 22; 
                 if (bb > 0 && tb > 0) {
                    bmi = bb / Math.pow(tb / 100, 2);
                 }
@@ -1390,7 +1041,6 @@
               score = 0;
             }
 
-            // Kategori dan Tatalaksana
             let katText = '', tata = '';
             if (score < 5) { katText = 'Rendah (<5%)'; tata = 'Edukasi UBM & pola hidup sehat. Kontrol 1 Tahun.'; }
             else if (score < 10) { katText = 'Sedang (5-<10%)'; tata = 'Konseling gaya hidup & pertimbangkan obat HT/DM. Kontrol 3-6 Bulan.'; }
@@ -1398,7 +1048,6 @@
             else if (score < 30) { katText = 'Tinggi (20-<30%)'; tata = 'Wajib skrining MoCA-Ina & EKG, obat HT/DM/Statin. Kontrol 3 Bulan.'; }
             else { katText = 'Sangat Tinggi (≥30%)'; tata = 'Wajib skrining MoCA-Ina & EKG, tatalaksana agresif. Rujuk bila perlu.'; }
 
-            // Sisipkan hasil ke baris data
             row['Metode Skrining'] = metode;
             row['Skor Risiko WHO'] = score + '%';
             row['Kategori'] = katText;
@@ -1423,7 +1072,6 @@
         head.innerHTML += `<th class="px-3 py-3">${k}</th>`;
       });
 
-      // Tampilkan preview max 10 baris
       const previewData = massalData.slice(0, 10);
       previewData.forEach(row => {
         let tr = '<tr class="hover:bg-slate-50">';
@@ -1532,6 +1180,6 @@
       res.classList.remove('hidden');
     }
     
-</script>
+  </script>
 </body>
 </html>
