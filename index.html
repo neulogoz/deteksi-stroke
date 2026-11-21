@@ -61,27 +61,9 @@
           <input type="text" id="pt-rm" placeholder="Contoh: RM-00124 / 58 Thn" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm">
         </div>
         <div>
-          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Asal Desa</label>
-          <select id="pt-fktp" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm bg-white">
-            <option value="Sumber">Sumber</option>
-            <option value="Jatihadi">Jatihadi</option>
-            <option value="Polbayem">Polbayem</option>
-            <option value="Sekarsari">Sekarsari</option>
-            <option value="Kedungasem">Kedungasem</option>
-            <option value="Megulung">Megulung</option>
-            <option value="Jadi">Jadi</option>
-            <option value="Bogorejo">Bogorejo</option>
-            <option value="Grawan">Grawan</option>
-            <option value="Randuagung">Randuagung</option>
-            <option value="Tlogotunggal">Tlogotunggal</option>
-            <option value="Sukorejo">Sukorejo</option>
-            <option value="Kedungtulup">Kedungtulup</option>
-            <option value="Krikilan">Krikilan</option>
-            <option value="Ronggomulyo">Ronggomulyo</option>
-            <option value="Logung">Logung</option>
-            <option value="Logede">Logede</option>
-            <option value="Pelemsari">Pelemsari</option>
-          </select>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Alamat / Asal Desa</label>
+          <input type="text" id="pt-fktp" maxlength="180" placeholder="Ketik desa/kelurahan, kecamatan, kabupaten" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm bg-white">
+          <p class="text-[10px] text-slate-500 mt-1">Isi manual; dapat berasal dari wilayah mana pun.</p>
         </div>
         <div>
           <label class="block text-[11px] font-semibold text-slate-500 mb-1">Pemeriksa</label>
@@ -517,31 +499,52 @@
     document.getElementById('current-date').innerText = todayStr;
 
     function getPatientHeader() {
-      const name = document.getElementById('pt-name').value || '-';
-      const rm = document.getElementById('pt-rm').value || '-';
-      const fktp = document.getElementById('pt-fktp').value || '-';
-      const doc = document.getElementById('pt-doc').value || '-';
-      return `*LAPORAN SKRINING DETEKSI STROKE FKTP*\n📅 Tanggal: ${todayStr}\n🏡 Asal Desa: ${fktp}\n👤 Nama Pasien: ${name}\n🆔 No. RM/Usia: ${rm}\n👨‍⚕️ Pemeriksa: ${doc}\n-----------------------------------\n`;
+      const name = document.getElementById('pt-name').value.trim() || '-';
+      const address = document.getElementById('pt-fktp').value.trim() || '-';
+      const doc = document.getElementById('pt-doc').value.trim() || '-';
+      return `BUKTI SKRINING DETEKSI STROKE\nTanggal: ${todayStr}\nNama: ${name}\nAlamat asal: ${address}\nPemeriksa: ${doc}\n-----------------------------------\n`;
     }
 
     function getActionButtonsHTML() {
       return `
         <div class="flex flex-wrap gap-2 mt-4 pt-3 border-t border-black/10 no-print">
-          <button onclick="simpanKeSpreadsheet(this)" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition">
-            ☁️ Simpan ke Spreadsheet
-          </button>
-          <button onclick="kirimWA()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition">
-            📲 Kirim ke WhatsApp
-          </button>
-          <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition">
-            🖨️ Cetak / PDF
-          </button>
+          <button onclick="simpanKeSpreadsheet(this)" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow">☁️ Simpan ke Spreadsheet</button>
+          <button onclick="kirimWA()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow">📲 WhatsApp</button>
+          <button onclick="kirimTelegram()" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow">✈️ Telegram</button>
+          <button onclick="bagikanHasil()" class="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow">↗️ Bagikan lainnya</button>
+          <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow">🖨️ Cetak / PDF</button>
         </div>
       `;
     }
 
+    function teksBuktiSkrining() {
+      if (!lastReportText) { alert('Hasil skrining belum tersedia.'); return ''; }
+      return getPatientHeader() + lastReportText +
+        `\n\nCatatan: Hasil ini merupakan skrining awal, bukan diagnosis. Konsultasikan hasil dan tindak lanjut dengan tenaga kesehatan.`;
+    }
+
     function kirimWA() {
-      window.open(`https://wa.me/?text=${encodeURIComponent(getPatientHeader() + lastReportText)}`, '_blank');
+      const text = teksBuktiSkrining();
+      if (text) window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    }
+
+    function kirimTelegram() {
+      const text = teksBuktiSkrining();
+      if (text) window.open(`https://t.me/share/url?url=&text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    }
+
+    async function bagikanHasil() {
+      const text = teksBuktiSkrining();
+      if (!text) return;
+      if (navigator.share) {
+        try { await navigator.share({ title: 'Bukti Skrining Deteksi Stroke', text: text }); }
+        catch (err) { if (err.name !== 'AbortError') alert('Tidak dapat membuka menu berbagi: ' + err.message); }
+      } else if (navigator.clipboard && window.isSecureContext) {
+        try { await navigator.clipboard.writeText(text); alert('Ringkasan berhasil disalin. Silakan tempel di aplikasi pesan.'); }
+        catch (err) { alert('Fitur berbagi tidak tersedia. Gunakan tombol WhatsApp atau Telegram.'); }
+      } else {
+        alert('Browser ini tidak mendukung menu berbagi. Gunakan WhatsApp, Telegram, atau Cetak/PDF.');
+      }
     }
 
     async function simpanKeSpreadsheet(btnElement) {
@@ -552,7 +555,7 @@
       }
       
       const payload = {
-        fktp: document.getElementById('pt-fktp').value || '-',
+        fktp: document.getElementById('pt-fktp').value.trim() || '-',
         pemeriksa: document.getElementById('pt-doc').value || '-',
         namaPasien: document.getElementById('pt-name').value || '-',
         rm: document.getElementById('pt-rm').value || '-',
